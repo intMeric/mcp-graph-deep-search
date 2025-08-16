@@ -4,10 +4,7 @@ go 1.23.0
 
 require (
 	github.com/PuerkitoBio/goquery v1.10.3
-	github.com/go-redis/redismock/v9 v9.2.0
 	github.com/gocolly/colly/v2 v2.2.0
-	github.com/google/uuid v1.6.0
-	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/intMeric/pii-extractor v0.2.0
 	github.com/jdkato/prose/v2 v2.0.0
 	github.com/joho/godotenv v1.5.1
@@ -15,7 +12,6 @@ require (
 	github.com/neo4j/neo4j-go-driver/v5 v5.28.1
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.38.0
-	github.com/redis/go-redis/v9 v9.12.1
 	go.mongodb.org/mongo-driver v1.17.4
 )
 
@@ -28,10 +24,8 @@ require (
 	github.com/bits-and-blooms/bitset v1.24.0 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/caarlos0/env/v11 v11.3.1 // indirect
-	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/deckarep/golang-set v1.8.0 // indirect
-	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/dlclark/regexp2 v1.11.5 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.9 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
@@ -45,6 +39,7 @@ require (
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/pprof v0.0.0-20250630185457-6e76a2b096b5 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/invopop/jsonschema v0.13.0 // indirect
 	github.com/kennygrant/sanitize v1.2.4 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
