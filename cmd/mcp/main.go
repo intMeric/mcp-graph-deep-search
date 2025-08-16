@@ -29,7 +29,7 @@ var searchDocumentUseCase search_document.SearchDocumentUseCase
 func main() {
 	// Add debug logging to stderr so it doesn't interfere with stdio transport
 	log.SetOutput(os.Stderr)
-	log.Printf("Starting MCP OSINT server...")
+	log.Printf("Starting MCP Deep Search server...")
 
 	ctx := context.Background()
 
@@ -151,7 +151,7 @@ type SearchDocumentArgs struct {
 
 func registerGraphExplorationTools(server *mcp_golang.Server) error {
 	// Tool: Get Graph Overview
-	err := server.RegisterTool("get_graph_overview", "Get an overview of the graph including statistics and available node types",
+	err := server.RegisterTool("get_graph_overview", "Get knowledge graph overview with statistics and node types for LLM exploration planning",
 		func(args EmptyArgs) (*mcp_golang.ToolResponse, error) {
 			if exploreGraphUseCase == nil {
 				return nil, fmt.Errorf("graph database not available")
@@ -177,7 +177,7 @@ func registerGraphExplorationTools(server *mcp_golang.Server) error {
 	}
 
 	// Tool: Get Nodes by Type
-	err = server.RegisterTool("get_nodes_by_type", "Get paginated nodes of a specific type",
+	err = server.RegisterTool("get_nodes_by_type", "Get paginated nodes of a specific type for knowledge graph exploration",
 		func(args GetNodesByTypeArgs) (*mcp_golang.ToolResponse, error) {
 			if exploreGraphUseCase == nil {
 				return nil, fmt.Errorf("graph database not available")
@@ -221,7 +221,7 @@ func registerGraphExplorationTools(server *mcp_golang.Server) error {
 	}
 
 	// Tool: Get Node Relations
-	err = server.RegisterTool("get_node_relations", "Get all relations for a specific node",
+	err = server.RegisterTool("get_node_relations", "Get all relations for a specific node to enable deep graph traversal",
 		func(args GetNodeRelationsArgs) (*mcp_golang.ToolResponse, error) {
 			if exploreGraphUseCase == nil {
 				return nil, fmt.Errorf("graph database not available")
@@ -252,7 +252,7 @@ func registerGraphExplorationTools(server *mcp_golang.Server) error {
 	}
 
 	// Tool: Get Connected Nodes
-	err = server.RegisterTool("get_connected_nodes", "Get all nodes connected to a specific node with their relationships",
+	err = server.RegisterTool("get_connected_nodes", "Get all nodes connected to a specific node for comprehensive knowledge discovery",
 		func(args GetConnectedNodesArgs) (*mcp_golang.ToolResponse, error) {
 			if exploreGraphUseCase == nil {
 				return nil, fmt.Errorf("graph database not available")
@@ -287,7 +287,7 @@ func registerGraphExplorationTools(server *mcp_golang.Server) error {
 
 func registerSearchAndAnalyzeTools(server *mcp_golang.Server) error {
 	// Tool: Search and Analyze
-	err := server.RegisterTool("search_and_analyze", "Search the web using SearXNG and analyze found URLs for PII, keywords, and relationships",
+	err := server.RegisterTool("search_and_analyze", "Perform deep search using SearXNG, analyze content, and build explorable knowledge graph for LLM discovery",
 		func(args SearchAndAnalyzeArgs) (*mcp_golang.ToolResponse, error) {
 			if searchAndAnalyzeUseCase == nil {
 				return nil, fmt.Errorf("search and analyze use case not available")
@@ -347,7 +347,7 @@ func registerSearchAndAnalyzeTools(server *mcp_golang.Server) error {
 
 func registerSearchDocumentTools(server *mcp_golang.Server) error {
 	// Tool: Search Document
-	err := server.RegisterTool("search_document", "Search for a document in the database using node ID and location",
+	err := server.RegisterTool("search_document", "Retrieve detailed document content from knowledge graph nodes for deep analysis",
 		func(args SearchDocumentArgs) (*mcp_golang.ToolResponse, error) {
 			if searchDocumentUseCase == nil {
 				return nil, fmt.Errorf("search document use case not available")
