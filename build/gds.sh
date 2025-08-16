@@ -5,16 +5,24 @@ set -e
 echo "🔍 Graph Deep Search (GDS) Launcher"
 echo "=================================="
 
-# Check if .env file exists in current directory (build)
-if [ ! -f ".env" ]; then
-    echo "❌ Error: .env file not found in current directory"
-    echo "Please create a .env file with the required environment variables"
+# Check if .env file is provided as argument
+if [ "$1" != "" ]; then
+    ENV_FILE="$1"
+    if [ ! -f "$ENV_FILE" ]; then
+        echo "❌ Error: .env file not found at $ENV_FILE"
+        exit 1
+    fi
+else
+    echo "❌ Error: No .env file specified"
+    echo "Usage: $0 <path_to_.env_file>"
+    echo "Example: $0 .env"
+    echo "Example: $0 /path/to/production.env"
     exit 1
 fi
 
-# Load environment variables from .env file
-echo "📄 Loading environment variables from .env..."
-export $(grep -v '^#' .env | grep -v '^$' | xargs)
+# Load environment variables from specified .env file
+echo "📄 Loading environment variables from $ENV_FILE..."
+export $(grep -v '^#' "$ENV_FILE" | grep -v '^$' | xargs)
 
 # Print all environment variables from .env (excluding comments and empty lines)
 echo "🔑 Environment variables loaded:"
@@ -24,7 +32,7 @@ while IFS= read -r line; do
         key=$(echo "$line" | cut -d'=' -f1)
         echo "  ✓ $key"
     fi
-done < .env
+done < "$ENV_FILE"
 
 echo ""
 

@@ -29,8 +29,8 @@ func NewMongoDBConfig(defaultCollection string) *MongoDBConfig {
 	return &MongoDBConfig{
 		URI:               env.GetOrDefault("MONGODB_URI", DefaultMongoDBURI),
 		Database:          env.GetOrDefault("MONGODB_DATABASE", DefaultMongoDBDatabase),
-		Username:          env.GetOrDefault("MONGODB_USERNAME", ""),
-		Password:          env.GetOrDefault("MONGODB_PASSWORD", ""),
+		Username:          env.GetOrDefault("MONGODB_USERNAME", "admin"),
+		Password:          env.GetOrDefault("MONGODB_PASSWORD", "admin"),
 		DefaultCollection: defaultCollection,
 		Timeout:           DefaultMongoDBTimeout,
 	}

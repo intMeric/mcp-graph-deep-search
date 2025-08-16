@@ -8,7 +8,7 @@ import (
 const (
 	DefaultNeo4jURI      = "bolt://localhost:7687"
 	DefaultNeo4jUsername = "neo4j"
-	DefaultNeo4jPassword = "password"
+	DefaultNeo4jPassword = "isMyNeo4jPassword"
 	DefaultNeo4jDatabase = "neo4j"
 )
 
