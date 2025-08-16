@@ -95,6 +95,7 @@ var _ = Describe("MyComponent", func() {
 
 - Main executable: `cmd/mcp/main.go` - MCP (Model Context Protocol) server
 - Build and run: `go run cmd/mcp/main.go`
+- For Claude Desktop: Use `build/mcp-gds` binary (automatically loads .env from multiple locations)
 - Required services: Start dependencies with `docker-compose up -d` (Neo4j, MongoDB, Redis, SearXNG)
 
 ## Infrastructure Dependencies

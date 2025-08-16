@@ -34,7 +34,12 @@ func main() {
 	ctx := context.Background()
 
 	// Load environment variables from .env file if it exists
-	if err := godotenv.Load(".env"); err != nil {
+	envFile := ".env"
+	if len(os.Args) > 1 {
+		envFile = os.Args[1]
+	}
+	log.Printf("Loading environment variables from: %s", envFile)
+	if err := godotenv.Load(envFile); err != nil {
 		log.Printf("No .env file found or error loading it: %v", err)
 	}
 
