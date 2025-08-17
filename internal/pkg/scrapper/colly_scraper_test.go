@@ -71,7 +71,7 @@ var _ = Describe("CollyScraper", func() {
 				result, err := scraper.Scrape(ctx, server.URL, options)
 				Expect(err).NotTo(HaveOccurred())
 
-				expectedTitle := "Meteo Lille (59000) - Nord : Prévisions Meteo GRATUITE à 15 jours - La Chaîne Météo"
+				expectedTitle := "Meteo Lille - Test Page"
 				Expect(result.Title).To(Equal(expectedTitle))
 			})
 
@@ -88,8 +88,8 @@ var _ = Describe("CollyScraper", func() {
 				Expect(err).NotTo(HaveOccurred())
 
 				Expect(result.MetaTags).NotTo(BeEmpty())
-				Expect(result.MetaTags["description"]).NotTo(BeEmpty())
-				Expect(result.MetaTags["og:title"]).NotTo(BeEmpty())
+				Expect(result.MetaTags["description"]).To(Equal("Page de test pour le scraping avec métadonnées météo"))
+				Expect(result.MetaTags["keywords"]).To(Equal("météo, lille, prévisions, test"))
 			})
 
 			It("should extract links", func() {
