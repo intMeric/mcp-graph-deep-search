@@ -271,11 +271,6 @@ Key external dependencies:
 - Configurable search parameters: time range, category, language, result limits
 - Returns comprehensive analysis including found documents, extracted data, and graph relationships for LLM exploration
 
-**Search Document Use Case (`internal/app/use-cases/search_document/`)**
-
-- Provides search_document MCP tool for retrieving detailed content from knowledge graph nodes
-- Searches MongoDB for documents using node ID and location, enabling deep content access
-- Returns structured document data that LLMs can analyze for comprehensive responses
 
 **Analyze Webpage Use Case (`internal/app/use-cases/analyze_webpage/`)**
 
@@ -284,6 +279,15 @@ Key external dependencies:
 - Integration of web scraping, PII extraction, keyword extraction, and graph relationship creation
 - Handles relation creation errors gracefully with detailed error context
 - Returns document ID, extracted data, and relation statistics
+
+**Smart Document Retrieval Use Case (`internal/app/use-cases/smart_document_retrieval/`)**
+
+- Intelligent document retrieval with automatic analysis fallback for better LLM guidance
+- Provides get_document MCP tool that tries document retrieval first, then auto-analyzes if needed
+- Extracts URLs from node structure (DisplayName or ID patterns) for automatic webpage analysis
+- Returns comprehensive status information (found, analyzed_and_retrieved, no_document, error)
+- Improves LLM experience by providing a single, intelligent tool for document access
+- Configurable auto-analysis behavior with detailed action and status reporting
 
 ### Directory Structure
 
@@ -298,8 +302,8 @@ Key external dependencies:
   - `use-cases/`: MCP tool implementations
     - `explore_graph/`: Graph exploration tools (overview, nodes by type, relations, connected nodes)
     - `search_and_analyze/`: Web search and content analysis tool
-    - `search_document/`: Document retrieval from database
     - `analyze_webpage/`: Webpage analysis workflow
+    - `smart_document_retrieval/`: Intelligent document retrieval with automatic analysis fallback
 - `internal/pkg/`: Reusable internal packages
   - `scrapper/`: Web scraping functionality with Colly integration
   - `cache/`: Generic caching interfaces and implementations  

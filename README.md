@@ -35,7 +35,7 @@ MONGODB_URI=mongodb://admin:admin@localhost:27017
 MONGODB_USERNAME=admin
 MONGODB_PASSWORD=admin
 
-# Neo4j Configuration  
+# Neo4j Configuration
 NEO4J_URI=bolt://localhost:7687
 NEO4J_USERNAME=neo4j
 NEO4J_PASSWORD=isMyNeo4jPassword
@@ -59,8 +59,8 @@ Add the following configuration to your Claude Desktop MCP servers configuration
 {
   "mcpServers": {
     "graph-deep-search": {
-      "command": "/home/vieu/Documents/Dev/mcp-graph-deep-search/build/mcp-gds",
-      "args": ["/home/vieu/Documents/Dev/mcp-graph-deep-search/build/.env"],
+      "command": "/home/v/Documents/Dev/mcp-graph-deep-search/build/mcp-gds",
+      "args": ["/home/v/Documents/Dev/mcp-graph-deep-search/build/.env"],
       "env": {}
     }
   }
@@ -193,7 +193,7 @@ docker-compose ps
 All configuration is handled through environment variables in the `.env` file:
 
 - `NEO4J_URI`, `NEO4J_USERNAME`, `NEO4J_PASSWORD`: Neo4j connection and authentication
-- `MONGODB_URI`, `MONGODB_USERNAME`, `MONGODB_PASSWORD`: MongoDB connection and authentication  
+- `MONGODB_URI`, `MONGODB_USERNAME`, `MONGODB_PASSWORD`: MongoDB connection and authentication
 - `SEARXNG_HOST`, `SEARXNG_LANGUAGE`: SearXNG search engine configuration
 
 ### SearXNG Configuration

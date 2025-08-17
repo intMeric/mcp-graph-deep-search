@@ -20,7 +20,7 @@ import (
 	"mgds/internal/app/use-cases/explore_graph"
 	"mgds/internal/app/use-cases/prune_graph"
 	"mgds/internal/app/use-cases/search_and_analyze"
-	"mgds/internal/app/use-cases/search_document"
+	"mgds/internal/app/use-cases/smart_document_retrieval"
 	"mgds/internal/pkg/configuration"
 	"mgds/internal/pkg/database"
 	"mgds/internal/pkg/graph"
@@ -33,9 +33,9 @@ import (
 // Global variables for use cases - initialized once
 var exploreGraphUseCase explore_graph.ExploreGraphUseCase
 var searchAndAnalyzeUseCase search_and_analyze.SearchAndAnalyzeUseCase
-var searchDocumentUseCase search_document.SearchDocumentUseCase
 var analyzeWebpageUseCase analyze_webpage.AnalyzeWebpageUseCase
 var pruneGraphUseCase prune_graph.PruneGraphUseCase
+var smartDocumentRetrievalUseCase smart_document_retrieval.SmartDocumentRetrievalUseCase
 
 func main() {
 	// Add debug logging to stderr so it doesn't interfere with stdio transport
@@ -89,15 +89,14 @@ func main() {
 		log.Printf("Search and analyze use case initialized successfully")
 	}
 
-	// Initialize search document use case
-	log.Printf("Initializing search document use case...")
-	db, err3 := database.NewMongoDatabase("documents") // Default collection for document search
+	// Initialize database for document operations
+	log.Printf("Initializing database...")
+	db, err3 := database.NewMongoDatabase("documents") // Default collection for document operations
 	if err3 != nil {
-		log.Printf("Warning: Failed to initialize database for search document use case: %v", err3)
-		log.Printf("Search document tools will return errors")
+		log.Printf("Warning: Failed to initialize database: %v", err3)
+		log.Printf("Document-related tools will return errors")
 	} else {
-		searchDocumentUseCase = search_document.NewSearchDocumentUseCase(db)
-		log.Printf("Search document use case initialized successfully")
+		log.Printf("Database initialized successfully")
 	}
 
 	// Initialize analyze webpage use case
@@ -143,6 +142,19 @@ func main() {
 		log.Printf("Prune graph tools will return errors")
 	}
 
+	// Initialize smart document retrieval use case
+	log.Printf("Initializing smart document retrieval use case...")
+	if db != nil && analyzeWebpageUseCase != nil {
+		smartDocumentRetrievalUseCase = smart_document_retrieval.NewSmartDocumentRetrievalUseCase(
+			db,
+			analyzeWebpageUseCase,
+		)
+		log.Printf("Smart document retrieval use case initialized successfully")
+	} else {
+		log.Printf("Warning: Dependencies not available for smart document retrieval use case")
+		log.Printf("Smart document retrieval tools will return errors")
+	}
+
 	// Create channel to keep server alive (based on official example)
 	done := make(chan struct{})
 
@@ -160,9 +172,6 @@ func main() {
 		log.Fatalf("Failed to register search and analyze tools: %v", err)
 	}
 
-	if err := registerSearchDocumentTools(server); err != nil {
-		log.Fatalf("Failed to register search document tools: %v", err)
-	}
 
 	if err := registerAnalyzeWebpageTools(server); err != nil {
 		log.Fatalf("Failed to register analyze webpage tools: %v", err)
@@ -170,6 +179,10 @@ func main() {
 
 	if err := registerPruneGraphTools(server); err != nil {
 		log.Fatalf("Failed to register prune graph tools: %v", err)
+	}
+
+	if err := registerSmartDocumentRetrievalTools(server); err != nil {
+		log.Fatalf("Failed to register smart document retrieval tools: %v", err)
 	}
 
 	log.Printf("MCP server ready, starting to serve...")
@@ -211,10 +224,6 @@ type SearchAndAnalyzeArgs struct {
 	MaxResults int    `json:"maxResults" jsonschema:"description=Maximum number of results to analyze (default: 10),minimum=1,maximum=50"`
 }
 
-// Search document tool arguments
-type SearchDocumentArgs struct {
-	Node *node.Node `json:"node" jsonschema:"required,description=Node with ID and Location to search for in database"`
-}
 
 // Analyze webpage tool arguments
 type AnalyzeWebpageArgs struct {
@@ -241,6 +250,12 @@ type PreviewDeletionArgs struct {
 	NodeID   string `json:"nodeId" jsonschema:"required,description=ID of the node to preview deletion for"`
 	Cascade  bool   `json:"cascade" jsonschema:"description=Whether to include descendants in preview"`
 	MaxDepth int    `json:"maxDepth" jsonschema:"description=Maximum depth for cascade preview (default: 5),minimum=1,maximum=20"`
+}
+
+// Smart document retrieval tool arguments
+type SmartDocumentRetrievalArgs struct {
+	Node        *node.Node `json:"node" jsonschema:"required,description=Node with ID to retrieve or analyze document for"`
+	AutoAnalyze bool       `json:"autoAnalyze" jsonschema:"description=Automatically analyze webpage if no document exists (default: true)"`
 }
 
 func registerGraphExplorationTools(server *mcp_golang.Server) error {
@@ -439,40 +454,6 @@ func registerSearchAndAnalyzeTools(server *mcp_golang.Server) error {
 	return nil
 }
 
-func registerSearchDocumentTools(server *mcp_golang.Server) error {
-	// Tool: Search Document
-	err := server.RegisterTool("search_document", "Retrieve detailed document content from knowledge graph nodes for deep analysis",
-		func(args SearchDocumentArgs) (*mcp_golang.ToolResponse, error) {
-			if searchDocumentUseCase == nil {
-				return nil, fmt.Errorf("search document use case not available")
-			}
-
-			ctx := context.Background()
-
-			if args.Node == nil {
-				return nil, fmt.Errorf("node is required")
-			}
-
-			result, err := searchDocumentUseCase.Execute(ctx, args.Node)
-			if err != nil {
-				return nil, fmt.Errorf("failed to search document: %w", err)
-			}
-
-			content, err := json.MarshalIndent(result, "", "  ")
-			if err != nil {
-				return nil, fmt.Errorf("failed to marshal response: %w", err)
-			}
-
-			return mcp_golang.NewToolResponse(
-				mcp_golang.NewTextContent(string(content)),
-			), nil
-		})
-	if err != nil {
-		return fmt.Errorf("failed to register search_document tool: %w", err)
-	}
-
-	return nil
-}
 
 func registerAnalyzeWebpageTools(server *mcp_golang.Server) error {
 	// Tool: Analyze Webpage
@@ -637,6 +618,53 @@ func registerPruneGraphTools(server *mcp_golang.Server) error {
 		})
 	if err != nil {
 		return fmt.Errorf("failed to register preview_deletion tool: %w", err)
+	}
+
+	return nil
+}
+
+func registerSmartDocumentRetrievalTools(server *mcp_golang.Server) error {
+	// Tool: Get Document
+	err := server.RegisterTool("get_document", "Intelligently retrieve existing document or automatically analyze webpage if no document exists. Perfect for LLMs needing document content with automatic fallback to analysis.",
+		func(args SmartDocumentRetrievalArgs) (*mcp_golang.ToolResponse, error) {
+			if smartDocumentRetrievalUseCase == nil {
+				return nil, fmt.Errorf("smart document retrieval use case not available")
+			}
+
+			ctx := context.Background()
+
+			if args.Node == nil {
+				return nil, fmt.Errorf("node is required")
+			}
+
+			// Default autoAnalyze to true if not specified
+			autoAnalyze := args.AutoAnalyze
+			if args.AutoAnalyze == false {
+				// Check if it was explicitly set to false, if not default to true
+				autoAnalyze = true
+			}
+
+			req := &smart_document_retrieval.SmartDocumentRetrievalRequest{
+				Node:        args.Node,
+				AutoAnalyze: autoAnalyze,
+			}
+
+			response, err := smartDocumentRetrievalUseCase.Execute(ctx, req)
+			if err != nil {
+				return nil, fmt.Errorf("failed to execute smart document retrieval: %w", err)
+			}
+
+			content, err := json.MarshalIndent(response, "", "  ")
+			if err != nil {
+				return nil, fmt.Errorf("failed to marshal response: %w", err)
+			}
+
+			return mcp_golang.NewToolResponse(
+				mcp_golang.NewTextContent(string(content)),
+			), nil
+		})
+	if err != nil {
+		return fmt.Errorf("failed to register get_document tool: %w", err)
 	}
 
 	return nil
