@@ -12,19 +12,27 @@ import (
 	"github.com/metoro-io/mcp-golang/transport/stdio"
 
 	"mgds/internal/app/services/graph_explorer"
+	"mgds/internal/app/services/link"
+	"mgds/internal/app/services/text_analysis"
+	"mgds/internal/app/services/webpage_analysis"
+	"mgds/internal/app/use-cases/analyze_webpage"
 	"mgds/internal/app/use-cases/explore_graph"
 	"mgds/internal/app/use-cases/search_and_analyze"
 	"mgds/internal/app/use-cases/search_document"
 	"mgds/internal/pkg/configuration"
 	"mgds/internal/pkg/database"
 	"mgds/internal/pkg/graph"
+	"mgds/internal/pkg/keyword"
 	"mgds/internal/pkg/node"
+	"mgds/internal/pkg/pii"
+	"mgds/internal/pkg/scrapper"
 )
 
 // Global variables for use cases - initialized once
 var exploreGraphUseCase explore_graph.ExploreGraphUseCase
 var searchAndAnalyzeUseCase search_and_analyze.SearchAndAnalyzeUseCase
 var searchDocumentUseCase search_document.SearchDocumentUseCase
+var analyzeWebpageUseCase analyze_webpage.AnalyzeWebpageUseCase
 
 func main() {
 	// Add debug logging to stderr so it doesn't interfere with stdio transport
@@ -89,6 +97,38 @@ func main() {
 		log.Printf("Search document use case initialized successfully")
 	}
 
+	// Initialize analyze webpage use case
+	log.Printf("Initializing analyze webpage use case...")
+	if graphDB != nil && db != nil {
+		webScraper := scrapper.NewWebScraper()
+		
+		keywordExtractor, err4 := keyword.NewExtractor()
+		if err4 != nil {
+			log.Printf("Warning: Failed to initialize keyword extractor: %v", err4)
+			log.Printf("Analyze webpage tools will return errors")
+		} else {
+			piiExtractor, err5 := pii.NewPIIExtractor()
+			if err5 != nil {
+				log.Printf("Warning: Failed to initialize PII extractor: %v", err5)
+				log.Printf("Analyze webpage tools will return errors")
+			} else {
+				textAnalyzer := text_analysis.NewTextAnalysisService(piiExtractor, keywordExtractor)
+				webpageAnalyzer := webpage_analysis.NewWebpageAnalysisService(webScraper, textAnalyzer)
+				linkService := link.NewDirectLinkService(graphDB)
+				
+				analyzeWebpageUseCase = analyze_webpage.NewAnalyzeWebpageUseCase(
+					webpageAnalyzer,
+					linkService,
+					db,
+				)
+				log.Printf("Analyze webpage use case initialized successfully")
+			}
+		}
+	} else {
+		log.Printf("Warning: Dependencies not available for analyze webpage use case")
+		log.Printf("Analyze webpage tools will return errors")
+	}
+
 	// Create channel to keep server alive (based on official example)
 	done := make(chan struct{})
 
@@ -108,6 +148,10 @@ func main() {
 
 	if err := registerSearchDocumentTools(server); err != nil {
 		log.Fatalf("Failed to register search document tools: %v", err)
+	}
+
+	if err := registerAnalyzeWebpageTools(server); err != nil {
+		log.Fatalf("Failed to register analyze webpage tools: %v", err)
 	}
 
 	log.Printf("MCP server ready, starting to serve...")
@@ -152,6 +196,11 @@ type SearchAndAnalyzeArgs struct {
 // Search document tool arguments
 type SearchDocumentArgs struct {
 	Node *node.Node `json:"node" jsonschema:"required,description=Node with ID and Location to search for in database"`
+}
+
+// Analyze webpage tool arguments
+type AnalyzeWebpageArgs struct {
+	URL string `json:"url" jsonschema:"required,description=URL of the webpage to analyze"`
 }
 
 func registerGraphExplorationTools(server *mcp_golang.Server) error {
@@ -380,6 +429,41 @@ func registerSearchDocumentTools(server *mcp_golang.Server) error {
 		})
 	if err != nil {
 		return fmt.Errorf("failed to register search_document tool: %w", err)
+	}
+
+	return nil
+}
+
+func registerAnalyzeWebpageTools(server *mcp_golang.Server) error {
+	// Tool: Analyze Webpage
+	err := server.RegisterTool("analyze_webpage", "Analyze a specific webpage for content, PII, keywords, and build knowledge graph relationships",
+		func(args AnalyzeWebpageArgs) (*mcp_golang.ToolResponse, error) {
+			if analyzeWebpageUseCase == nil {
+				return nil, fmt.Errorf("analyze webpage use case not available")
+			}
+
+			ctx := context.Background()
+
+			req := &analyze_webpage.AnalyzeWebpageRequest{
+				URL: args.URL,
+			}
+
+			response, err := analyzeWebpageUseCase.Execute(ctx, req)
+			if err != nil {
+				return nil, fmt.Errorf("failed to analyze webpage: %w", err)
+			}
+
+			content, err := json.MarshalIndent(response, "", "  ")
+			if err != nil {
+				return nil, fmt.Errorf("failed to marshal response: %w", err)
+			}
+
+			return mcp_golang.NewToolResponse(
+				mcp_golang.NewTextContent(string(content)),
+			), nil
+		})
+	if err != nil {
+		return fmt.Errorf("failed to register analyze_webpage tool: %w", err)
 	}
 
 	return nil

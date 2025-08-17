@@ -83,7 +83,7 @@ type ScrapingOptions struct {
 func DefaultScrapingOptions() *ScrapingOptions {
 	return &ScrapingOptions{
 		Timeout:         30 * time.Second,
-		UserAgent:       "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ChatGPT-User/1.0; +https://openai.com/bot",
+		UserAgent:       "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; MGDS",
 		FollowRedirects: true,
 		MaxDepth:        1,
 		RateLimitDelay:  1 * time.Second,
@@ -96,4 +96,3 @@ func DefaultScrapingOptions() *ScrapingOptions {
 		ExtractMeta:     true,
 	}
 }
-

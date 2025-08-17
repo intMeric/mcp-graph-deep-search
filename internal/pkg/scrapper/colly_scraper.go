@@ -19,7 +19,7 @@ type CollyScraper struct {
 
 func NewCollyScraper() *CollyScraper {
 	c := colly.NewCollector(
-		colly.UserAgent("Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ChatGPT-User/1.0; +https://openai.com/bot"),
+		colly.UserAgent("Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; MGDS"),
 	)
 
 	c.SetRequestTimeout(30 * time.Second)
@@ -27,13 +27,13 @@ func NewCollyScraper() *CollyScraper {
 	return &CollyScraper{
 		collector: c,
 		timeout:   30 * time.Second,
-		userAgent: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ChatGPT-User/1.0; +https://openai.com/bot",
+		userAgent: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; MGDS",
 	}
 }
 
 func NewCollyScraperWithDebug() *CollyScraper {
 	c := colly.NewCollector(
-		colly.UserAgent("Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ChatGPT-User/1.0; +https://openai.com/bot"),
+		colly.UserAgent("Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; MGDS"),
 		colly.Debugger(&debug.LogDebugger{}),
 	)
 
@@ -42,7 +42,7 @@ func NewCollyScraperWithDebug() *CollyScraper {
 	return &CollyScraper{
 		collector: c,
 		timeout:   30 * time.Second,
-		userAgent: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; ChatGPT-User/1.0; +https://openai.com/bot",
+		userAgent: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; MGDS",
 	}
 }
 
