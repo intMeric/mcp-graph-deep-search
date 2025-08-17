@@ -72,6 +72,27 @@ func (m *mockGraph) GetConnectedNodes(ctx context.Context, nodeID string) ([]*gr
 	return m.connections, nil
 }
 
+func (m *mockGraph) DeleteNode(ctx context.Context, nodeID string) error {
+	if m.shouldFail {
+		return errors.New("delete node failed")
+	}
+	return nil
+}
+
+func (m *mockGraph) DeleteRelation(ctx context.Context, sourceID, targetID, relationType string) error {
+	if m.shouldFail {
+		return errors.New("delete relation failed")
+	}
+	return nil
+}
+
+func (m *mockGraph) GetDescendantNodes(ctx context.Context, nodeID string, maxDepth int) ([]*node.Node, error) {
+	if m.shouldFail {
+		return nil, errors.New("get descendant nodes failed")
+	}
+	return []*node.Node{}, nil
+}
+
 var _ = Describe("GraphExplorerService", func() {
 	var (
 		service graph_explorer.GraphExplorerService

@@ -18,4 +18,9 @@ type Graph interface {
 	GetNodesByType(ctx context.Context, nodeType string, offset, limit int) (*PaginatedNodesResult, error)
 	GetNodeRelations(ctx context.Context, nodeID string) ([]*Relation, error)
 	GetConnectedNodes(ctx context.Context, nodeID string) ([]*NodeConnection, error)
+
+	// Graph pruning methods
+	DeleteNode(ctx context.Context, nodeID string) error
+	DeleteRelation(ctx context.Context, sourceID, targetID, relationType string) error
+	GetDescendantNodes(ctx context.Context, nodeID string, maxDepth int) ([]*node.Node, error)
 }

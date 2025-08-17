@@ -52,3 +52,10 @@ type NodeConnection struct {
 	Relation *Relation  `json:"relation"`
 	IsSource bool       `json:"isSource"`
 }
+
+type DeletionResult struct {
+	DeletedNodes     int      `json:"deletedNodes"`
+	DeletedRelations int      `json:"deletedRelations"`
+	DeletedNodeIDs   []string `json:"deletedNodeIds"`
+	Errors           []string `json:"errors,omitempty"`
+}

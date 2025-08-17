@@ -12,11 +12,13 @@ import (
 	"github.com/metoro-io/mcp-golang/transport/stdio"
 
 	"mgds/internal/app/services/graph_explorer"
+	"mgds/internal/app/services/graph_pruner"
 	"mgds/internal/app/services/link"
 	"mgds/internal/app/services/text_analysis"
 	"mgds/internal/app/services/webpage_analysis"
 	"mgds/internal/app/use-cases/analyze_webpage"
 	"mgds/internal/app/use-cases/explore_graph"
+	"mgds/internal/app/use-cases/prune_graph"
 	"mgds/internal/app/use-cases/search_and_analyze"
 	"mgds/internal/app/use-cases/search_document"
 	"mgds/internal/pkg/configuration"
@@ -33,6 +35,7 @@ var exploreGraphUseCase explore_graph.ExploreGraphUseCase
 var searchAndAnalyzeUseCase search_and_analyze.SearchAndAnalyzeUseCase
 var searchDocumentUseCase search_document.SearchDocumentUseCase
 var analyzeWebpageUseCase analyze_webpage.AnalyzeWebpageUseCase
+var pruneGraphUseCase prune_graph.PruneGraphUseCase
 
 func main() {
 	// Add debug logging to stderr so it doesn't interfere with stdio transport
@@ -129,6 +132,17 @@ func main() {
 		log.Printf("Analyze webpage tools will return errors")
 	}
 
+	// Initialize prune graph use case
+	log.Printf("Initializing prune graph use case...")
+	if graphDB != nil && db != nil {
+		prunerService := graph_pruner.NewGraphPrunerService(graphDB, db)
+		pruneGraphUseCase = prune_graph.NewPruneGraphUseCase(prunerService)
+		log.Printf("Prune graph use case initialized successfully")
+	} else {
+		log.Printf("Warning: Dependencies not available for prune graph use case")
+		log.Printf("Prune graph tools will return errors")
+	}
+
 	// Create channel to keep server alive (based on official example)
 	done := make(chan struct{})
 
@@ -152,6 +166,10 @@ func main() {
 
 	if err := registerAnalyzeWebpageTools(server); err != nil {
 		log.Fatalf("Failed to register analyze webpage tools: %v", err)
+	}
+
+	if err := registerPruneGraphTools(server); err != nil {
+		log.Fatalf("Failed to register prune graph tools: %v", err)
 	}
 
 	log.Printf("MCP server ready, starting to serve...")
@@ -201,6 +219,28 @@ type SearchDocumentArgs struct {
 // Analyze webpage tool arguments
 type AnalyzeWebpageArgs struct {
 	URL string `json:"url" jsonschema:"required,description=URL of the webpage to analyze"`
+}
+
+// Prune graph tool arguments
+type DeleteNodeArgs struct {
+	NodeID string `json:"nodeId" jsonschema:"required,description=ID of the node to delete"`
+}
+
+type DeleteNodeCascadeArgs struct {
+	NodeID   string `json:"nodeId" jsonschema:"required,description=ID of the node to delete with all descendants"`
+	MaxDepth int    `json:"maxDepth" jsonschema:"description=Maximum depth for cascade deletion (default: 5),minimum=1,maximum=20"`
+}
+
+type DeleteRelationArgs struct {
+	SourceID     string `json:"sourceId" jsonschema:"required,description=ID of the source node"`
+	TargetID     string `json:"targetId" jsonschema:"required,description=ID of the target node"`
+	RelationType string `json:"relationType" jsonschema:"required,description=Type of relation to delete"`
+}
+
+type PreviewDeletionArgs struct {
+	NodeID   string `json:"nodeId" jsonschema:"required,description=ID of the node to preview deletion for"`
+	Cascade  bool   `json:"cascade" jsonschema:"description=Whether to include descendants in preview"`
+	MaxDepth int    `json:"maxDepth" jsonschema:"description=Maximum depth for cascade preview (default: 5),minimum=1,maximum=20"`
 }
 
 func registerGraphExplorationTools(server *mcp_golang.Server) error {
@@ -464,6 +504,139 @@ func registerAnalyzeWebpageTools(server *mcp_golang.Server) error {
 		})
 	if err != nil {
 		return fmt.Errorf("failed to register analyze_webpage tool: %w", err)
+	}
+
+	return nil
+}
+
+func registerPruneGraphTools(server *mcp_golang.Server) error {
+	// Tool: Delete Node
+	err := server.RegisterTool("delete_node", "Delete a specific node from the knowledge graph, including all its relationships and associated documents",
+		func(args DeleteNodeArgs) (*mcp_golang.ToolResponse, error) {
+			if pruneGraphUseCase == nil {
+				return nil, fmt.Errorf("prune graph use case not available")
+			}
+
+			ctx := context.Background()
+
+			req := &prune_graph.DeleteNodeRequest{
+				NodeID: args.NodeID,
+			}
+
+			response, err := pruneGraphUseCase.DeleteNode(ctx, req)
+			if err != nil {
+				return nil, fmt.Errorf("failed to delete node: %w", err)
+			}
+
+			content, err := json.MarshalIndent(response, "", "  ")
+			if err != nil {
+				return nil, fmt.Errorf("failed to marshal response: %w", err)
+			}
+
+			return mcp_golang.NewToolResponse(
+				mcp_golang.NewTextContent(string(content)),
+			), nil
+		})
+	if err != nil {
+		return fmt.Errorf("failed to register delete_node tool: %w", err)
+	}
+
+	// Tool: Delete Node Cascade
+	err = server.RegisterTool("delete_node_cascade", "Delete a node and all its descendants from the knowledge graph, with configurable depth limit",
+		func(args DeleteNodeCascadeArgs) (*mcp_golang.ToolResponse, error) {
+			if pruneGraphUseCase == nil {
+				return nil, fmt.Errorf("prune graph use case not available")
+			}
+
+			ctx := context.Background()
+
+			req := &prune_graph.DeleteNodeCascadeRequest{
+				NodeID:   args.NodeID,
+				MaxDepth: args.MaxDepth,
+			}
+
+			response, err := pruneGraphUseCase.DeleteNodeCascade(ctx, req)
+			if err != nil {
+				return nil, fmt.Errorf("failed to delete node cascade: %w", err)
+			}
+
+			content, err := json.MarshalIndent(response, "", "  ")
+			if err != nil {
+				return nil, fmt.Errorf("failed to marshal response: %w", err)
+			}
+
+			return mcp_golang.NewToolResponse(
+				mcp_golang.NewTextContent(string(content)),
+			), nil
+		})
+	if err != nil {
+		return fmt.Errorf("failed to register delete_node_cascade tool: %w", err)
+	}
+
+	// Tool: Delete Relation
+	err = server.RegisterTool("delete_relation", "Delete a specific relationship between two nodes in the knowledge graph",
+		func(args DeleteRelationArgs) (*mcp_golang.ToolResponse, error) {
+			if pruneGraphUseCase == nil {
+				return nil, fmt.Errorf("prune graph use case not available")
+			}
+
+			ctx := context.Background()
+
+			req := &prune_graph.DeleteRelationRequest{
+				SourceID:     args.SourceID,
+				TargetID:     args.TargetID,
+				RelationType: args.RelationType,
+			}
+
+			response, err := pruneGraphUseCase.DeleteRelation(ctx, req)
+			if err != nil {
+				return nil, fmt.Errorf("failed to delete relation: %w", err)
+			}
+
+			content, err := json.MarshalIndent(response, "", "  ")
+			if err != nil {
+				return nil, fmt.Errorf("failed to marshal response: %w", err)
+			}
+
+			return mcp_golang.NewToolResponse(
+				mcp_golang.NewTextContent(string(content)),
+			), nil
+		})
+	if err != nil {
+		return fmt.Errorf("failed to register delete_relation tool: %w", err)
+	}
+
+	// Tool: Preview Deletion
+	err = server.RegisterTool("preview_deletion", "Preview what nodes and relationships would be affected by a deletion operation before executing it",
+		func(args PreviewDeletionArgs) (*mcp_golang.ToolResponse, error) {
+			if pruneGraphUseCase == nil {
+				return nil, fmt.Errorf("prune graph use case not available")
+			}
+
+			ctx := context.Background()
+
+			req := &prune_graph.PreviewDeletionRequest{
+				NodeID:   args.NodeID,
+				Cascade:  args.Cascade,
+				MaxDepth: args.MaxDepth,
+			}
+
+			response, err := pruneGraphUseCase.PreviewDeletion(ctx, req)
+			if err != nil {
+				return nil, fmt.Errorf("failed to preview deletion: %w", err)
+			}
+
+			content, err := json.MarshalIndent(response, "", "  ")
+			if err != nil {
+				return nil, fmt.Errorf("failed to marshal response: %w", err)
+			}
+
+			return mcp_golang.NewToolResponse(
+				mcp_golang.NewTextContent(string(content)),
+			), nil
+		})
+	if err != nil {
+		return fmt.Errorf("failed to register preview_deletion tool: %w", err)
 	}
 
 	return nil

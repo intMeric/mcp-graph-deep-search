@@ -708,3 +708,191 @@ func (g *Neo4jGraph) GetConnectedNodes(ctx context.Context, nodeID string) ([]*N
 
 	return result.([]*NodeConnection), nil
 }
+
+// DeleteNode removes a node and all its relationships from the graph
+func (g *Neo4jGraph) DeleteNode(ctx context.Context, nodeID string) error {
+	if strings.TrimSpace(nodeID) == "" {
+		return fmt.Errorf("nodeID cannot be empty")
+	}
+
+	if err := g.ensureConnection(ctx); err != nil {
+		return fmt.Errorf("connection error: %w", err)
+	}
+
+	g.mu.RLock()
+	driver := g.driver
+	g.mu.RUnlock()
+
+	session := driver.NewSession(ctx, neo4j.SessionConfig{
+		DatabaseName: g.config.Database,
+	})
+	defer session.Close(ctx)
+
+	query := `
+		MATCH (n {id: $nodeId})
+		DETACH DELETE n
+		RETURN count(n) as deletedCount
+	`
+
+	parameters := map[string]any{
+		"nodeId": nodeID,
+	}
+
+	_, err := session.ExecuteWrite(ctx, func(tx neo4j.ManagedTransaction) (any, error) {
+		result, err := tx.Run(ctx, query, parameters)
+		if err != nil {
+			return nil, err
+		}
+
+		if result.Next(ctx) {
+			deletedCount := result.Record().Values[0].(int64)
+			if deletedCount == 0 {
+				return nil, fmt.Errorf("node with ID '%s' not found", nodeID)
+			}
+		}
+
+		return nil, result.Err()
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to delete node %s: %w", nodeID, err)
+	}
+
+	return nil
+}
+
+// DeleteRelation removes a specific relationship between two nodes
+func (g *Neo4jGraph) DeleteRelation(ctx context.Context, sourceID, targetID, relationType string) error {
+	if strings.TrimSpace(sourceID) == "" {
+		return fmt.Errorf("sourceID cannot be empty")
+	}
+	if strings.TrimSpace(targetID) == "" {
+		return fmt.Errorf("targetID cannot be empty")
+	}
+	if strings.TrimSpace(relationType) == "" {
+		return fmt.Errorf("relationType cannot be empty")
+	}
+
+	if err := g.ensureConnection(ctx); err != nil {
+		return fmt.Errorf("connection error: %w", err)
+	}
+
+	g.mu.RLock()
+	driver := g.driver
+	g.mu.RUnlock()
+
+	session := driver.NewSession(ctx, neo4j.SessionConfig{
+		DatabaseName: g.config.Database,
+	})
+	defer session.Close(ctx)
+
+	query := fmt.Sprintf(`
+		MATCH (source {id: $sourceId})-[r:%s]->(target {id: $targetId})
+		DELETE r
+		RETURN count(r) as deletedCount
+	`, relationType)
+
+	parameters := map[string]any{
+		"sourceId": sourceID,
+		"targetId": targetID,
+	}
+
+	_, err := session.ExecuteWrite(ctx, func(tx neo4j.ManagedTransaction) (any, error) {
+		result, err := tx.Run(ctx, query, parameters)
+		if err != nil {
+			return nil, err
+		}
+
+		if result.Next(ctx) {
+			deletedCount := result.Record().Values[0].(int64)
+			if deletedCount == 0 {
+				return nil, fmt.Errorf("relation '%s' between '%s' and '%s' not found", relationType, sourceID, targetID)
+			}
+		}
+
+		return nil, result.Err()
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to delete relation: %w", err)
+	}
+
+	return nil
+}
+
+// GetDescendantNodes returns all descendant nodes up to maxDepth levels
+func (g *Neo4jGraph) GetDescendantNodes(ctx context.Context, nodeID string, maxDepth int) ([]*node.Node, error) {
+	if strings.TrimSpace(nodeID) == "" {
+		return nil, fmt.Errorf("nodeID cannot be empty")
+	}
+	if maxDepth <= 0 {
+		maxDepth = 10 // Default max depth to prevent infinite traversal
+	}
+
+	if err := g.ensureConnection(ctx); err != nil {
+		return nil, fmt.Errorf("connection error: %w", err)
+	}
+
+	g.mu.RLock()
+	driver := g.driver
+	g.mu.RUnlock()
+
+	session := driver.NewSession(ctx, neo4j.SessionConfig{
+		DatabaseName: g.config.Database,
+	})
+	defer session.Close(ctx)
+
+	query := `
+		MATCH path = (start {id: $nodeId})-[*1..%d]->(descendant)
+		RETURN DISTINCT descendant.id as id, 
+		       labels(descendant)[0] as type,
+		       descendant.displayName as displayName,
+		       descendant.location as location
+		ORDER BY length(path), descendant.id
+	`
+	query = fmt.Sprintf(query, maxDepth)
+
+	parameters := map[string]any{
+		"nodeId": nodeID,
+	}
+
+	result, err := session.ExecuteRead(ctx, func(tx neo4j.ManagedTransaction) (any, error) {
+		result, err := tx.Run(ctx, query, parameters)
+		if err != nil {
+			return nil, err
+		}
+
+		var descendants []*node.Node
+		for result.Next(ctx) {
+			record := result.Record()
+			id := record.Values[0].(string)
+			nodeType := record.Values[1].(string)
+			displayName := ""
+			location := ""
+
+			if record.Values[2] != nil {
+				displayName = record.Values[2].(string)
+			}
+			if record.Values[3] != nil {
+				location = record.Values[3].(string)
+			}
+
+			descendant := &node.Node{
+				ID:          id,
+				Type:        nodeType,
+				DisplayName: displayName,
+				Location:    location,
+			}
+
+			descendants = append(descendants, descendant)
+		}
+
+		return descendants, result.Err()
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get descendant nodes: %w", err)
+	}
+
+	return result.([]*node.Node), nil
+}
