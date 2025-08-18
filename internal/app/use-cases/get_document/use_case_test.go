@@ -31,7 +31,7 @@ func (m *mockDatabase) FindByID(ctx context.Context, collection, id string, dest
 	return nil
 }
 
-func (m *mockDatabase) Insert(ctx context.Context, id string, document interface{}) error {
+func (m *mockDatabase) Insert(ctx context.Context, collection, id string, document interface{}) error {
 	return fmt.Errorf("not implemented")
 }
 
@@ -45,10 +45,6 @@ func (m *mockDatabase) Delete(ctx context.Context, collection, id string) error 
 
 func (m *mockDatabase) Close(ctx context.Context) error {
 	return nil
-}
-
-func (m *mockDatabase) GetLocation() string {
-	return "mock_location"
 }
 
 // Mock analyze webpage use case
@@ -71,7 +67,7 @@ var _ = Describe("SmartDocumentRetrievalUseCase", func() {
 		mockAnalyzeWeb        *mockAnalyzeWebpageUseCase
 		ctx                   context.Context
 		testNode              *node.Node
-		testNodeWithLocation  *node.Node
+		testNodeWithDocument  *node.Node
 		testNodeWithoutURL    *node.Node
 	)
 
@@ -98,24 +94,24 @@ var _ = Describe("SmartDocumentRetrievalUseCase", func() {
 		ctx = context.Background()
 
 		testNode = &node.Node{
-			ID:          "example.com_/test",
-			Type:        "URL",
-			DisplayName: "https://example.com/test",
-			Location:    "",
+			ID:                  "example.com_/test",
+			Type:                "URL",
+			DisplayName:         "https://example.com/test",
+			IsDocumentAvailable: false,
 		}
 
-		testNodeWithLocation = &node.Node{
-			ID:          "example.com_/test",
-			Type:        "URL",
-			DisplayName: "Test Page",
-			Location:    "webpage",
+		testNodeWithDocument = &node.Node{
+			ID:                  "example.com_/test",
+			Type:                "URL",
+			DisplayName:         "Test Page",
+			IsDocumentAvailable: true,
 		}
 
 		testNodeWithoutURL = &node.Node{
-			ID:          "no-url-node",
-			Type:        "URL",
-			DisplayName: "No URL Node",
-			Location:    "",
+			ID:                  "no-url-node",
+			Type:                "URL",
+			DisplayName:         "No URL Node",
+			IsDocumentAvailable: false,
 		}
 	})
 
@@ -161,7 +157,7 @@ var _ = Describe("SmartDocumentRetrievalUseCase", func() {
 		Context("with existing document", func() {
 			It("should retrieve existing document successfully", func() {
 				req := &get_document.GetDocumentRequest{
-					Node:        testNodeWithLocation,
+					Node:        testNodeWithDocument,
 					AutoAnalyze: false,
 				}
 
@@ -178,7 +174,7 @@ var _ = Describe("SmartDocumentRetrievalUseCase", func() {
 			It("should handle database error", func() {
 				mockDB.shouldError = true
 				req := &get_document.GetDocumentRequest{
-					Node:        testNodeWithLocation,
+					Node:        testNodeWithDocument,
 					AutoAnalyze: false,
 				}
 
@@ -205,7 +201,7 @@ var _ = Describe("SmartDocumentRetrievalUseCase", func() {
 				Expect(response).NotTo(BeNil())
 				Expect(response.Status).To(Equal("no_document"))
 				Expect(response.Action).To(Equal("analysis_required"))
-				Expect(response.Message).To(ContainSubstring("webpage analysis required"))
+				Expect(response.Message).To(ContainSubstring("Set autoAnalyze=true"))
 			})
 		})
 
@@ -294,10 +290,10 @@ var _ = Describe("SmartDocumentRetrievalUseCase", func() {
 
 			It("should extract URL from ID when it contains domain info", func() {
 				nodeWithDomainID := &node.Node{
-					ID:          "github.com_/user/repo",
-					Type:        "URL",
-					DisplayName: "GitHub Repo",
-					Location:    "",
+					ID:                  "github.com_/user/repo",
+					Type:                "URL",
+					DisplayName:         "GitHub Repo",
+					IsDocumentAvailable: false,
 				}
 
 				req := &get_document.GetDocumentRequest{

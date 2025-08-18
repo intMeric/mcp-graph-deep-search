@@ -111,10 +111,10 @@ var _ = Describe("Neo4jGraph", func() {
 			Context("with valid node", func() {
 				It("should pass validation", func() {
 					node := &node.Node{
-						Type:        "URL",
-						DisplayName: "Test URL",
-						ID:          "test-id-123",
-						Location:    "db.collection",
+						Type:                "URL",
+						DisplayName:         "Test URL",
+						ID:                  "test-id-123",
+						IsDocumentAvailable: true,
 					}
 
 					err := node.Validate()

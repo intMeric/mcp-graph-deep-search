@@ -75,7 +75,7 @@ var _ = Describe("ExploreGraphUseCase", func() {
 			},
 			paginated: &graph.PaginatedNodesResult{
 				Nodes: []*node.Node{
-					{Type: "URL", ID: "url1", DisplayName: "Example URL", Location: "db"},
+					{Type: "URL", ID: "url1", DisplayName: "Example URL", IsDocumentAvailable: true},
 				},
 				Total:  1,
 				Offset: 0,
@@ -86,7 +86,7 @@ var _ = Describe("ExploreGraphUseCase", func() {
 			},
 			connections: []*graph.NodeConnection{
 				{
-					Node:     &node.Node{Type: "URL", ID: "url2", DisplayName: "Connected URL", Location: "db"},
+					Node:     &node.Node{Type: "URL", ID: "url2", DisplayName: "Connected URL", IsDocumentAvailable: true},
 					Relation: &graph.Relation{Type: "navigation_link", SourceID: "url1", TargetID: "url2"},
 					IsSource: true,
 				},

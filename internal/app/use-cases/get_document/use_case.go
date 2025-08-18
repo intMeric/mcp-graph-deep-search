@@ -42,11 +42,11 @@ func (uc *getDocumentUseCase) Execute(ctx context.Context, req *GetDocumentReque
 		Node: req.Node,
 	}
 
-	// Check if document exists (location is not empty)
-	if strings.TrimSpace(req.Node.Location) != "" {
+	// Check if document exists
+	if req.Node.IsDocumentAvailable {
 		// Try to retrieve existing document directly from database
 		var document map[string]interface{}
-		err := uc.database.FindByID(ctx, req.Node.Location, req.Node.ID, &document)
+		err := uc.database.FindByID(ctx, req.Node.Type, req.Node.ID, &document)
 		if err == nil {
 			response.Document = document
 			response.Status = "found"
@@ -55,18 +55,18 @@ func (uc *getDocumentUseCase) Execute(ctx context.Context, req *GetDocumentReque
 			return response, nil
 		}
 		
-		// Document location exists but retrieval failed
+		// Document should be available but retrieval failed
 		response.Status = "error"
 		response.Action = "document_retrieval_failed"
 		response.Message = fmt.Sprintf("Failed to retrieve document: %v", err)
 		return response, nil
 	}
 
-	// Location is empty - no document exists yet
+	// No document exists yet
 	if !req.AutoAnalyze {
 		response.Status = "no_document"
 		response.Action = "analysis_required"
-		response.Message = "No document found. Node location is empty, webpage analysis required. Set autoAnalyze=true or use analyze_webpage tool first."
+		response.Message = "No document found. Set autoAnalyze=true or use analyze_webpage tool first."
 		return response, nil
 	}
 
@@ -93,17 +93,16 @@ func (uc *getDocumentUseCase) Execute(ctx context.Context, req *GetDocumentReque
 	}
 
 	// Analysis successful - now retrieve the document
-	// After analysis, the document should be available in the database
-	// We'll assume the location is set based on the node type (e.g., "webpage" for URL nodes)
+	// After analysis, the document should be available in the database using node type as collection
 	updatedNode := &node.Node{
-		ID:          req.Node.ID,
-		Type:        req.Node.Type,
-		DisplayName: req.Node.DisplayName,
-		Location:    "webpage", // Default location for analyzed webpages
+		ID:                  req.Node.ID,
+		Type:                req.Node.Type,
+		DisplayName:         req.Node.DisplayName,
+		IsDocumentAvailable: true,
 	}
 
 	var document map[string]interface{}
-	err = uc.database.FindByID(ctx, updatedNode.Location, updatedNode.ID, &document)
+	err = uc.database.FindByID(ctx, updatedNode.Type, updatedNode.ID, &document)
 	if err != nil {
 		response.Status = "partial_success"
 		response.Action = "analyzed_but_retrieval_failed"

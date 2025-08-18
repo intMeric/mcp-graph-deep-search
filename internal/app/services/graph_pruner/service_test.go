@@ -130,7 +130,7 @@ func newMockDatabase() *mockDatabase {
 	}
 }
 
-func (m *mockDatabase) Insert(ctx context.Context, id string, document interface{}) error {
+func (m *mockDatabase) Insert(ctx context.Context, collection, id string, document interface{}) error {
 	return fmt.Errorf("not implemented")
 }
 
@@ -156,9 +156,6 @@ func (m *mockDatabase) Close(ctx context.Context) error {
 	return nil
 }
 
-func (m *mockDatabase) GetLocation() string {
-	return "test_location"
-}
 
 var _ = Describe("GraphPrunerService", func() {
 	var (
@@ -178,24 +175,24 @@ var _ = Describe("GraphPrunerService", func() {
 		ctx = context.Background()
 
 		testNode = &node.Node{
-			ID:          "test-node-1",
-			Type:        "webpage",
-			DisplayName: "Test Node 1",
-			Location:    "webpage",
+			ID:                  "test-node-1",
+			Type:                "webpage",
+			DisplayName:         "Test Node 1",
+			IsDocumentAvailable: true,
 		}
 
 		testNode2 = &node.Node{
-			ID:          "test-node-2",
-			Type:        "webpage",
-			DisplayName: "Test Node 2",
-			Location:    "",
+			ID:                  "test-node-2",
+			Type:                "webpage",
+			DisplayName:         "Test Node 2",
+			IsDocumentAvailable: false,
 		}
 
 		testNode3 = &node.Node{
-			ID:          "test-node-3",
-			Type:        "webpage",
-			DisplayName: "Test Node 3",
-			Location:    "webpage",
+			ID:                  "test-node-3",
+			Type:                "webpage",
+			DisplayName:         "Test Node 3",
+			IsDocumentAvailable: true,
 		}
 
 		mockGraph.addNode(testNode)

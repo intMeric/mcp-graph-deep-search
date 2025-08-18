@@ -79,11 +79,12 @@ type mockDatabase struct {
 	storedDocuments map[string]any
 }
 
-func (m *mockDatabase) Insert(ctx context.Context, id string, document any) error {
+func (m *mockDatabase) Insert(ctx context.Context, collection, id string, document any) error {
 	if m.storedDocuments == nil {
 		m.storedDocuments = make(map[string]any)
 	}
-	m.storedDocuments[id] = document
+	key := collection + "_" + id
+	m.storedDocuments[key] = document
 	return nil
 }
 
@@ -103,9 +104,6 @@ func (m *mockDatabase) Close(ctx context.Context) error {
 	return nil
 }
 
-func (m *mockDatabase) GetLocation() string {
-	return "webpage"
-}
 
 var _ = Describe("AnalyzeWebpageUseCase", func() {
 	var (
@@ -154,7 +152,7 @@ var _ = Describe("AnalyzeWebpageUseCase", func() {
 				_, err := useCase.Execute(ctx, request)
 
 				Expect(err).NotTo(HaveOccurred())
-				Expect(mockDB.storedDocuments).To(HaveKey("example.com/test"))
+				Expect(mockDB.storedDocuments).To(HaveKey("URL_example.com/test"))
 			})
 
 			It("should create graph relations", func() {

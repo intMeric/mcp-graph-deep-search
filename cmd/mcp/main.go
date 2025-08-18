@@ -90,7 +90,7 @@ func main() {
 
 	// Initialize database for document operations
 	log.Printf("Initializing database...")
-	db, err3 := database.NewMongoDatabase("documents") // Default collection for document operations
+	db, err3 := database.NewMongoDatabase("mgds") // Database name, collections determined by node type
 	if err3 != nil {
 		log.Printf("Warning: Failed to initialize database: %v", err3)
 		log.Printf("Document-related tools will return errors")
@@ -245,8 +245,7 @@ type PreviewDeletionArgs struct {
 
 // Get document tool arguments
 type GetDocumentArgs struct {
-	Node        *node.Node `json:"node" jsonschema:"required,description=Node with ID to retrieve or analyze document for"`
-	AutoAnalyze bool       `json:"autoAnalyze" jsonschema:"description=Automatically analyze webpage if no document exists (default: true)"`
+	Node *node.Node `json:"node" jsonschema:"required,description=Node with ID to retrieve or analyze document for"`
 }
 
 func registerGraphExplorationTools(server *mcp_golang.Server) error {
@@ -627,16 +626,9 @@ func registerGetDocumentTools(server *mcp_golang.Server) error {
 				return nil, fmt.Errorf("node is required")
 			}
 
-			// Default autoAnalyze to true if not specified
-			autoAnalyze := args.AutoAnalyze
-			if args.AutoAnalyze == false {
-				// Check if it was explicitly set to false, if not default to true
-				autoAnalyze = true
-			}
-
 			req := &get_document.GetDocumentRequest{
 				Node:        args.Node,
-				AutoAnalyze: autoAnalyze,
+				AutoAnalyze: true,
 			}
 
 			response, err := getDocumentUseCase.Execute(ctx, req)

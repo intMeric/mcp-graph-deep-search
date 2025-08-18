@@ -59,7 +59,7 @@ var _ = Describe("Database", func() {
 						Value: 42,
 					}
 
-					err := db.Insert(ctx, "test-id", doc)
+					err := db.Insert(ctx, "test_collection", "test-id", doc)
 
 					Expect(err).NotTo(HaveOccurred())
 				})
@@ -69,7 +69,7 @@ var _ = Describe("Database", func() {
 					defer cancel()
 
 					doc := &TestDocument{Name: "test", Value: 42}
-					err := db.Insert(timeoutCtx, "timeout-test", doc)
+					err := db.Insert(timeoutCtx, "test_collection", "timeout-test", doc)
 
 					Expect(err).To(HaveOccurred())
 				})
@@ -81,7 +81,7 @@ var _ = Describe("Database", func() {
 				BeforeEach(func() {
 					doc := &TestDocument{Name: "find_test", Value: 100}
 					insertedID = "find-test-id"
-					err := db.Insert(ctx, insertedID, doc)
+					err := db.Insert(ctx, "test_collection", insertedID, doc)
 					Expect(err).NotTo(HaveOccurred())
 				})
 
@@ -108,7 +108,7 @@ var _ = Describe("Database", func() {
 				BeforeEach(func() {
 					doc := &TestDocument{Name: "update_test", Value: 200}
 					insertedID = "update-test-id"
-					err := db.Insert(ctx, insertedID, doc)
+					err := db.Insert(ctx, "test_collection", insertedID, doc)
 					Expect(err).NotTo(HaveOccurred())
 				})
 
@@ -142,7 +142,7 @@ var _ = Describe("Database", func() {
 				BeforeEach(func() {
 					doc := &TestDocument{Name: "delete_test", Value: 400}
 					insertedID = "delete-test-id"
-					err := db.Insert(ctx, insertedID, doc)
+					err := db.Insert(ctx, "test_collection", insertedID, doc)
 					Expect(err).NotTo(HaveOccurred())
 				})
 

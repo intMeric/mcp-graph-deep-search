@@ -38,9 +38,9 @@ func (s *graphPrunerService) DeleteNode(ctx context.Context, nodeID string) (*gr
 		Errors:         []string{},
 	}
 
-	// Delete associated document from MongoDB if it has a location
-	if targetNode.Location != "" {
-		err := s.database.Delete(ctx, targetNode.Location, nodeID)
+	// Delete associated document from MongoDB if document is available
+	if targetNode.IsDocumentAvailable {
+		err := s.database.Delete(ctx, targetNode.Type, nodeID)
 		if err != nil && err != database.ErrNotFound {
 			result.Errors = append(result.Errors, fmt.Sprintf("Failed to delete document for node %s: %v", nodeID, err))
 		}
@@ -135,7 +135,7 @@ func (s *graphPrunerService) PreviewDeletion(ctx context.Context, nodeID string,
 		AffectedNodes:  []*node.Node{},
 		TotalNodes:     1,
 		TotalRelations: 0,
-		HasDocuments:   targetNode.Location != "",
+		HasDocuments:   targetNode.IsDocumentAvailable,
 	}
 
 	// Get relations count for the target node
@@ -166,7 +166,7 @@ func (s *graphPrunerService) PreviewDeletion(ctx context.Context, nodeID string,
 				preview.TotalRelations += len(descendantRelations)
 			}
 
-			if descendant.Location != "" {
+			if descendant.IsDocumentAvailable {
 				preview.HasDocuments = true
 			}
 		}

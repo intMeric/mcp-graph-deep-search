@@ -6,12 +6,12 @@ import (
 )
 
 type Node struct {
-	Type        string `json:"type"`
-	DisplayName string `json:"displayName"`
-	ID          string `json:"id"`
-	Score       int    `json:"score,omitempty"`
-	SubType     string `json:"subType,omitempty"`
-	Location    string `json:"location,omitempty"`
+	Type                 string `json:"type"`
+	DisplayName          string `json:"displayName"`
+	ID                   string `json:"id"`
+	Score                int    `json:"score,omitempty"`
+	SubType              string `json:"subType,omitempty"`
+	IsDocumentAvailable  bool   `json:"isDocumentAvailable,omitempty"`
 }
 
 type NodeConvertible interface {
@@ -33,11 +33,7 @@ func (n *Node) Validate() error {
 	}
 
 	if strings.TrimSpace(n.DisplayName) == "" {
-		if strings.TrimSpace(n.Location) != "" {
-			n.DisplayName = strings.TrimSpace(n.Location)
-		} else {
-			return fmt.Errorf("displayName cannot be empty")
-		}
+		return fmt.Errorf("displayName cannot be empty")
 	}
 
 	if strings.TrimSpace(n.ID) == "" {

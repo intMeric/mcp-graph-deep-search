@@ -46,13 +46,14 @@ func (uc *analyzeWebpageUseCase) Execute(ctx context.Context, request *AnalyzeWe
 
 	documentID := webpageObj.GetID()
 
-	err = uc.storeDocument(ctx, documentID, webpageObj)
+	webpageNode := webpageObj.ToNode()
+	
+	err = uc.storeDocument(ctx, webpageNode.Type, documentID, webpageObj)
 	if err != nil {
 		return nil, err
 	}
 
-	webpageNode := webpageObj.ToNode()
-	webpageNode.Location = uc.database.GetLocation()
+	webpageNode.IsDocumentAvailable = true
 
 	linkNodes := webpageObj.GetLinkNodes()
 
@@ -83,10 +84,10 @@ func (uc *analyzeWebpageUseCase) validateRequest(request *AnalyzeWebpageRequest)
 	return nil
 }
 
-func (uc *analyzeWebpageUseCase) storeDocument(ctx context.Context, documentID string, webpageObj webpage.WebpageInterface) error {
+func (uc *analyzeWebpageUseCase) storeDocument(ctx context.Context, collection, documentID string, webpageObj webpage.WebpageInterface) error {
 	document := webpageObj.ToDocument()
 
-	err := uc.database.Insert(ctx, documentID, document)
+	err := uc.database.Insert(ctx, collection, documentID, document)
 	if err != nil {
 		return fmt.Errorf("failed to store document: %w", err)
 	}

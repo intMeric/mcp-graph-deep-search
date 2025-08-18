@@ -70,13 +70,9 @@ func NewMongoDB(config *MongoConfig) (Database, error) {
 	}, nil
 }
 
-func (m *mongoDatabase) GetLocation() string {
-	return m.defaultCollection
-}
-
 // Implement the Database interface methods
-func (m *mongoDatabase) Insert(ctx context.Context, id string, document any) error {
-	coll := m.database.Collection(m.defaultCollection)
+func (m *mongoDatabase) Insert(ctx context.Context, collection, id string, document any) error {
+	coll := m.database.Collection(collection)
 
 	ctx, cancel := context.WithTimeout(ctx, m.timeout)
 	defer cancel()

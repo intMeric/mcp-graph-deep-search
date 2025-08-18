@@ -142,7 +142,7 @@ func (g *Neo4jGraph) CreateNode(ctx context.Context, node *node.Node) error {
 	parameters := map[string]any{
 		"id":          node.ID,
 		"displayName": node.DisplayName,
-		"location":    node.Location,
+		"isDocumentAvailable":    node.IsDocumentAvailable,
 	}
 
 	_, err := session.ExecuteWrite(ctx, func(tx neo4j.ManagedTransaction) (any, error) {
@@ -314,10 +314,10 @@ func (g *Neo4jGraph) GetNode(ctx context.Context, id string) (*node.Node, error)
 	nodeType := labelsList[0].(string)
 
 	node := &node.Node{
-		Type:        nodeType,
-		DisplayName: displayName.(string),
-		ID:          nodeID.(string),
-		Location:    location.(string),
+		Type:                nodeType,
+		DisplayName:         displayName.(string),
+		ID:                  nodeID.(string),
+		IsDocumentAvailable: location.(string) != "",
 	}
 
 	return node, nil
@@ -529,10 +529,10 @@ func (g *Neo4jGraph) GetNodesByType(ctx context.Context, nodeType string, offset
 			location, _ := record.Get("location")
 
 			n := &node.Node{
-				Type:        nodeType,
-				ID:          nodeID.(string),
-				DisplayName: displayName.(string),
-				Location:    location.(string),
+				Type:                nodeType,
+				ID:                  nodeID.(string),
+				DisplayName:         displayName.(string),
+				IsDocumentAvailable: location.(string) != "",
 			}
 			nodes = append(nodes, n)
 		}
@@ -678,10 +678,10 @@ func (g *Neo4jGraph) GetConnectedNodes(ctx context.Context, nodeID string) ([]*N
 			}
 
 			targetNode := &node.Node{
-				Type:        nodeType,
-				ID:          targetID.(string),
-				DisplayName: targetDisplayName.(string),
-				Location:    targetLocation.(string),
+				Type:                nodeType,
+				ID:                  targetID.(string),
+				DisplayName:         targetDisplayName.(string),
+				IsDocumentAvailable: targetLocation.(string) != "",
 			}
 
 			relation := &Relation{
@@ -878,10 +878,10 @@ func (g *Neo4jGraph) GetDescendantNodes(ctx context.Context, nodeID string, maxD
 			}
 
 			descendant := &node.Node{
-				ID:          id,
-				Type:        nodeType,
-				DisplayName: displayName,
-				Location:    location,
+				ID:                  id,
+				Type:                nodeType,
+				DisplayName:         displayName,
+				IsDocumentAvailable: location != "",
 			}
 
 			descendants = append(descendants, descendant)

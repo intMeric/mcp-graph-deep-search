@@ -4,9 +4,9 @@ import (
 	"mgds/internal/pkg/configuration"
 )
 
-// NewMongoDatabase creates a new MongoDB database with a specific collection
-func NewMongoDatabase(collection string) (Database, error) {
-	config := configuration.NewMongoDBConfig(collection)
+// NewMongoDatabase creates a new MongoDB database connection
+func NewMongoDatabase(databaseName string) (Database, error) {
+	config := configuration.NewMongoDBConfig(databaseName)
 	return NewMongoDB(&MongoConfig{
 		URI:               config.URI,
 		Database:          config.Database,

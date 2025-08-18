@@ -117,6 +117,29 @@ The server requires environment variables for database connections. Create a `.e
 **Start Infrastructure**: `docker-compose up -d`
 **Stop Infrastructure**: `docker-compose down`
 
+## Available MCP Tools
+
+The server provides the following tools for Claude Desktop integration:
+
+### Graph Exploration Tools
+- `get_graph_overview`: Get knowledge graph statistics and node types
+- `get_nodes_by_type`: Retrieve paginated nodes of a specific type
+- `get_node_relations`: Get all relations for a specific node
+- `get_connected_nodes`: Find nodes connected to a specific node
+
+### Content Analysis Tools
+- `search_and_analyze`: Perform deep web search with knowledge graph construction
+- `analyze_webpage`: Analyze specific webpage content and build graph relationships
+
+### Document Management Tools
+- `get_document`: Intelligently retrieve documents with automatic analysis fallback
+
+### Graph Maintenance Tools
+- `delete_node`: Delete specific nodes from the knowledge graph
+- `delete_node_cascade`: Delete nodes and all descendants with depth limit
+- `delete_relation`: Delete specific relationships between nodes
+- `preview_deletion`: Preview deletion operations before execution
+
 ## Architecture
 
 WHEN THERE IS A CHANGE IN THE ARCHITECTURE, UPDATE THE CLAUDE.MD FILE.
@@ -135,16 +158,11 @@ This is a Go-based MCP server providing deep search capabilities through an LLM-
 
 **Caching System (`internal/pkg/cache/`)**
 
-- Generic `Cache` interface supporting Set/Get/Delete/Exists operations
-- Implementations: LRU cache and Redis cache
-- Context-aware operations with expiration support
+- **Note**: Cache system is documented but not currently implemented in the codebase
 
 **Queue System (`internal/pkg/queue/`)**
 
-- Generic queue interface `Queue[T]` for type-safe message handling
-- Request-Response pattern with `RequestResponseQueue[T, R]`
-- Redis-based implementation for distributed queuing
-- Support for both fire-and-forget and request-reply messaging patterns
+- **Note**: Queue system is documented but not currently implemented in the codebase
 
 **Keyword Extraction (`internal/pkg/keyword/`)**
 
@@ -187,8 +205,7 @@ This is a Go-based MCP server providing deep search capabilities through an LLM-
 ### Key Design Patterns
 
 - **Interface-driven design**: All major components define interfaces first
-- **Factory pattern**: Used for component instantiation (web scrapers, queues)
-- **Generic types**: Queue system uses Go generics for type safety
+- **Factory pattern**: Used for component instantiation (web scrapers, databases, keyword extractors)
 - **Context propagation**: All operations support context for cancellation/timeouts
 
 ### Dependencies
@@ -197,8 +214,6 @@ Key external dependencies:
 
 - `github.com/metoro-io/mcp-golang`: MCP (Model Context Protocol) server implementation
 - `github.com/gocolly/colly/v2`: Web scraping framework
-- `github.com/redis/go-redis/v9`: Redis client for caching and queuing
-- `github.com/hashicorp/golang-lru/v2`: LRU cache implementation
 - `github.com/jdkato/prose/v2`: Natural language processing for keyword extraction
 - `github.com/onsi/ginkgo/v2` + `github.com/onsi/gomega`: BDD testing framework
 - `github.com/neo4j/neo4j-go-driver/v5`: Neo4j database driver for graph operations
@@ -271,7 +286,6 @@ Key external dependencies:
 - Configurable search parameters: time range, category, language, result limits
 - Returns comprehensive analysis including found documents, extracted data, and graph relationships for LLM exploration
 
-
 **Analyze Webpage Use Case (`internal/app/use-cases/analyze_webpage/`)**
 
 - Comprehensive webpage analysis workflow combining scraping, content analysis, and graph storage
@@ -315,17 +329,14 @@ Key external dependencies:
     - `prune_graph/`: Graph cleanup and maintenance tools
 - `internal/pkg/`: Reusable internal packages
   - `scrapper/`: Web scraping functionality with Colly integration
-  - `cache/`: Generic caching interfaces and implementations  
-  - `queue/`: Message queue interfaces and Redis implementations
   - `keyword/`: Keyword extraction from text using prose library
   - `node/`: Node type definitions for graph database entities
-  - `env/`: Environment configuration utilities
   - `graph/`: Graph database interfaces and Neo4j implementation with typed nodes
   - `serializer/`: HTML parsing and serialization with goquery integration
   - `database/`: Generic database abstraction with MongoDB implementation
   - `search_engine/`: Web search functionality with SearXNG integration
   - `configuration/`: Configuration objects for external services (MongoDB, Neo4j, SearXNG)
-  - `constant/`: Application constants and definitions
+- `internal/constant/`: Application constants and definitions
 - `searxng/`: SearXNG search engine configuration and data
 - `build/`: Build artifacts and infrastructure configuration
 - `docker/`: Docker-related files and configurations

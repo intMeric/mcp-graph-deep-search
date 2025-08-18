@@ -13,10 +13,10 @@ var _ = Describe("MERGE Behavior", func() {
 		Context("when validating MERGE behavior conceptually", func() {
 			It("should handle node creation idempotently", func() {
 				node := &node.Node{
-					Type:        "URL",
-					DisplayName: "Test URL",
-					ID:          "test-merge-123",
-					Location:    "db.collection",
+					Type:                "URL",
+					DisplayName:         "Test URL",
+					ID:                  "test-merge-123",
+					IsDocumentAvailable: true,
 				}
 
 				err := node.Validate()
@@ -25,23 +25,24 @@ var _ = Describe("MERGE Behavior", func() {
 
 			It("should allow updates to existing nodes", func() {
 				originalNode := &node.Node{
-					Type:        "URL",
-					DisplayName: "Original Name",
-					ID:          "test-update-123",
-					Location:    "db.collection1",
+					Type:                "URL",
+					DisplayName:         "Original Name",
+					ID:                  "test-update-123",
+					IsDocumentAvailable: false,
 				}
 
 				updatedNode := &node.Node{
-					Type:        "URL",
-					DisplayName: "Updated Name",
-					ID:          "test-update-123", // Same ID
-					Location:    "db.collection2",  // Different location
+					Type:                "URL",
+					DisplayName:         "Updated Name",
+					ID:                  "test-update-123", // Same ID
+					IsDocumentAvailable: true,              // Document now available
 				}
 
 				Expect(originalNode.Validate()).NotTo(HaveOccurred())
 				Expect(updatedNode.Validate()).NotTo(HaveOccurred())
 				Expect(originalNode.ID).To(Equal(updatedNode.ID))
 				Expect(originalNode.DisplayName).NotTo(Equal(updatedNode.DisplayName))
+				Expect(originalNode.IsDocumentAvailable).NotTo(Equal(updatedNode.IsDocumentAvailable))
 			})
 		})
 	})

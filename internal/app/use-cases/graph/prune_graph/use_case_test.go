@@ -30,10 +30,10 @@ func newMockPrunerService() *mockPrunerService {
 		},
 		preview: &graph_pruner.DeletionPreview{
 			TargetNode: &node.Node{
-				ID:          "test-node",
-				Type:        "webpage",
-				DisplayName: "Test Node",
-				Location:    "webpage",
+				ID:                  "test-node",
+				Type:                "webpage",
+				DisplayName:         "Test Node",
+				IsDocumentAvailable: true,
 			},
 			AffectedNodes:  []*node.Node{},
 			TotalNodes:     1,

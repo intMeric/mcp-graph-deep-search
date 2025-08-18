@@ -14,10 +14,10 @@ var _ = Describe("Types", func() {
 
 		BeforeEach(func() {
 			testNode = &node.Node{
-				Type:        "URL",
-				DisplayName: "Test URL",
-				ID:          "test-id-123",
-				Location:    "db.collection",
+				Type:                "URL",
+				DisplayName:         "Test URL",
+				ID:                  "test-id-123",
+				IsDocumentAvailable: true,
 			}
 		})
 
@@ -48,23 +48,15 @@ var _ = Describe("Types", func() {
 				Expect(err.Error()).To(ContainSubstring("type cannot be empty"))
 			})
 
-			It("should auto-fix empty display name with location", func() {
+			It("should reject empty display name", func() {
 				testNode.DisplayName = ""
 				err := testNode.Validate()
-				Expect(err).NotTo(HaveOccurred())
-				Expect(testNode.DisplayName).To(Equal("db.collection"))
+				Expect(err).To(HaveOccurred())
+				Expect(err.Error()).To(ContainSubstring("displayName cannot be empty"))
 			})
 
-			It("should auto-fix whitespace-only display name with location", func() {
+			It("should reject whitespace-only display name", func() {
 				testNode.DisplayName = "   "
-				err := testNode.Validate()
-				Expect(err).NotTo(HaveOccurred())
-				Expect(testNode.DisplayName).To(Equal("db.collection"))
-			})
-
-			It("should reject empty display name when location is also empty", func() {
-				testNode.DisplayName = ""
-				testNode.Location = ""
 				err := testNode.Validate()
 				Expect(err).To(HaveOccurred())
 				Expect(err.Error()).To(ContainSubstring("displayName cannot be empty"))
