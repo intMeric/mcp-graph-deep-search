@@ -22,11 +22,11 @@ func NewCollyScraper() *CollyScraper {
 		colly.UserAgent("Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; MGDS"),
 	)
 
-	c.SetRequestTimeout(30 * time.Second)
+	c.SetRequestTimeout(10 * time.Second)
 
 	return &CollyScraper{
 		collector: c,
-		timeout:   30 * time.Second,
+		timeout:   10 * time.Second,
 		userAgent: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; MGDS",
 	}
 }
@@ -37,11 +37,11 @@ func NewCollyScraperWithDebug() *CollyScraper {
 		colly.Debugger(&debug.LogDebugger{}),
 	)
 
-	c.SetRequestTimeout(30 * time.Second)
+	c.SetRequestTimeout(10 * time.Second)
 
 	return &CollyScraper{
 		collector: c,
-		timeout:   30 * time.Second,
+		timeout:   10 * time.Second,
 		userAgent: "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; MGDS",
 	}
 }
@@ -66,15 +66,11 @@ func (cs *CollyScraper) Scrape(ctx context.Context, targetURL string, options *S
 	}
 
 	result := &ScrapedData{
-		URL:         targetURL,
-		ScrapedAt:   time.Now(),
-		Links:       []Link{},
-		Images:      []Image{},
-		Forms:       []Form{},
-		Scripts:     []string{},
-		Stylesheets: []string{},
-		MetaTags:    make(map[string]string),
-		Headers:     make(map[string]string),
+		URL:        targetURL,
+		ScrapedAt:  time.Now(),
+		Links:      []Link{},
+		MetaTags:   make(map[string]string),
+		Headers:    make(map[string]string),
 	}
 
 	c := cs.collector.Clone()
@@ -108,18 +104,6 @@ func (cs *CollyScraper) Scrape(ctx context.Context, targetURL string, options *S
 			cs.extractLinks(e, result)
 		}
 
-		if options.ExtractImages {
-			cs.extractImages(e, result)
-		}
-
-		if options.ExtractForms {
-			cs.extractForms(e, result)
-		}
-
-		if options.ExtractScripts {
-			cs.extractScripts(e, result)
-			cs.extractStylesheets(e, result)
-		}
 	})
 
 	c.OnError(func(r *colly.Response, err error) {
@@ -254,94 +238,9 @@ func (cs *CollyScraper) extractLinks(e *colly.HTMLElement, result *ScrapedData) 
 	})
 }
 
-func (cs *CollyScraper) extractImages(e *colly.HTMLElement, result *ScrapedData) {
-	baseURL, _ := url.Parse(result.URL)
 
-	e.ForEach("img[src]", func(i int, elem *colly.HTMLElement) {
-		src := elem.Attr("src")
-		if src == "" {
-			return
-		}
 
-		absoluteURL := cs.resolveURL(baseURL, src)
 
-		image := Image{
-			URL:    absoluteURL,
-			Alt:    elem.Attr("alt"),
-			Title:  elem.Attr("title"),
-			Width:  elem.Attr("width"),
-			Height: elem.Attr("height"),
-		}
-
-		result.Images = append(result.Images, image)
-	})
-}
-
-func (cs *CollyScraper) extractForms(e *colly.HTMLElement, result *ScrapedData) {
-	e.ForEach("form", func(i int, elem *colly.HTMLElement) {
-		form := Form{
-			Action: elem.Attr("action"),
-			Method: strings.ToUpper(elem.Attr("method")),
-			Name:   elem.Attr("name"),
-			ID:     elem.Attr("id"),
-			Fields: []FormField{},
-		}
-
-		if form.Method == "" {
-			form.Method = "GET"
-		}
-
-		elem.ForEach("input, textarea, select", func(j int, field *colly.HTMLElement) {
-			fieldType := field.Attr("type")
-			if fieldType == "" {
-				switch field.Name {
-				case "textarea":
-					fieldType = "textarea"
-				case "select":
-					fieldType = "select"
-				default:
-					fieldType = "text"
-				}
-			}
-
-			formField := FormField{
-				Name:        field.Attr("name"),
-				Type:        fieldType,
-				Value:       field.Attr("value"),
-				Placeholder: field.Attr("placeholder"),
-				Required:    field.Attr("required") != "",
-			}
-
-			form.Fields = append(form.Fields, formField)
-		})
-
-		result.Forms = append(result.Forms, form)
-	})
-}
-
-func (cs *CollyScraper) extractScripts(e *colly.HTMLElement, result *ScrapedData) {
-	baseURL, _ := url.Parse(result.URL)
-
-	e.ForEach("script[src]", func(i int, elem *colly.HTMLElement) {
-		src := elem.Attr("src")
-		if src != "" {
-			absoluteURL := cs.resolveURL(baseURL, src)
-			result.Scripts = append(result.Scripts, absoluteURL)
-		}
-	})
-}
-
-func (cs *CollyScraper) extractStylesheets(e *colly.HTMLElement, result *ScrapedData) {
-	baseURL, _ := url.Parse(result.URL)
-
-	e.ForEach("link[rel=stylesheet]", func(i int, elem *colly.HTMLElement) {
-		href := elem.Attr("href")
-		if href != "" {
-			absoluteURL := cs.resolveURL(baseURL, href)
-			result.Stylesheets = append(result.Stylesheets, absoluteURL)
-		}
-	})
-}
 
 func (cs *CollyScraper) resolveURL(base *url.URL, reference string) string {
 	if base == nil {

@@ -75,7 +75,8 @@ var _ = Describe("CollyScraper", func() {
 				Expect(result.Title).To(Equal(expectedTitle))
 			})
 
-			It("should extract HTML body content", func() {
+			It("should extract HTML body content when enabled", func() {
+				options.ExtractHTML = true // Enable HTML extraction for this test
 				result, err := scraper.Scrape(ctx, server.URL, options)
 				Expect(err).NotTo(HaveOccurred())
 
@@ -128,20 +129,17 @@ var _ = Describe("CollyScraper", func() {
 
 			BeforeEach(func() {
 				slowServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					time.Sleep(2 * time.Second)
+					time.Sleep(400 * time.Millisecond)
 					w.WriteHeader(http.StatusOK)
 					w.Write([]byte("<html><head><title>Slow Page</title></head><body>Content</body></html>"))
 				}))
 
 				options = &ScrapingOptions{
-					Timeout:         500 * time.Millisecond,
+					Timeout:         300 * time.Millisecond,
 					UserAgent:       "Test-Bot/1.0",
 					ExtractText:     true,
 					ExtractHTML:     true,
 					ExtractLinks:    true,
-					ExtractImages:   true,
-					ExtractForms:    true,
-					ExtractScripts:  true,
 					ExtractMeta:     true,
 					FollowRedirects: true,
 				}
@@ -181,15 +179,12 @@ var _ = Describe("CollyScraper", func() {
 				}))
 
 				options = &ScrapingOptions{
-					Timeout:         5 * time.Second,
+					Timeout:         1 * time.Second,
 					UserAgent:       "Test-Bot/1.0",
-					RateLimitDelay:  100 * time.Millisecond,
+					RateLimitDelay:  10 * time.Millisecond,
 					ExtractText:     true,
 					ExtractHTML:     true,
 					ExtractLinks:    true,
-					ExtractImages:   true,
-					ExtractForms:    true,
-					ExtractScripts:  true,
 					ExtractMeta:     true,
 					FollowRedirects: true,
 				}
@@ -237,14 +232,11 @@ var _ = Describe("CollyScraper", func() {
 				}))
 
 				options = &ScrapingOptions{
-					Timeout:         5 * time.Second,
+					Timeout:         1 * time.Second,
 					UserAgent:       "Test-Bot/1.0",
 					ExtractText:     false,
 					ExtractHTML:     true,
 					ExtractLinks:    false,
-					ExtractImages:   false,
-					ExtractForms:    false,
-					ExtractScripts:  false,
 					ExtractMeta:     true,
 					FollowRedirects: true,
 				}
@@ -263,8 +255,6 @@ var _ = Describe("CollyScraper", func() {
 
 				Expect(result.Text).To(BeEmpty(), "Text should not be extracted when ExtractText is false")
 				Expect(result.Links).To(BeEmpty(), "Links should not be extracted when ExtractLinks is false")
-				Expect(result.Images).To(BeEmpty(), "Images should not be extracted when ExtractImages is false")
-				Expect(result.Scripts).To(BeEmpty(), "Scripts should not be extracted when ExtractScripts is false")
 			})
 		})
 	})
@@ -273,13 +263,11 @@ var _ = Describe("CollyScraper", func() {
 		It("should have correct default values", func() {
 			defaultOptions := DefaultScrapingOptions()
 
-			Expect(defaultOptions.Timeout).To(Equal(30 * time.Second))
+			Expect(defaultOptions.Timeout).To(Equal(10 * time.Second))
+			Expect(defaultOptions.RateLimitDelay).To(Equal(200 * time.Millisecond))
 			Expect(defaultOptions.ExtractText).To(BeTrue())
-			Expect(defaultOptions.ExtractHTML).To(BeTrue())
+			Expect(defaultOptions.ExtractHTML).To(BeFalse())
 			Expect(defaultOptions.ExtractLinks).To(BeTrue())
-			Expect(defaultOptions.ExtractImages).To(BeTrue())
-			Expect(defaultOptions.ExtractForms).To(BeTrue())
-			Expect(defaultOptions.ExtractScripts).To(BeTrue())
 			Expect(defaultOptions.ExtractMeta).To(BeTrue())
 		})
 	})

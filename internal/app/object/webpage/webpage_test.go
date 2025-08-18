@@ -24,7 +24,6 @@ var _ = Describe("Webpage", func() {
 				{URL: "https://example.com/link1", Text: "Link 1"},
 				{URL: "https://example.com/link2", Text: "Link 2"},
 			},
-			Images: []scrapper.Image{},
 		}
 
 		testWebpage = webpage.Build(scrapedData, "")
@@ -50,7 +49,7 @@ var _ = Describe("Webpage", func() {
 
 		It("should return an object that implements WebpageInterface", func() {
 			webpageObj := webpage.Build(scrapedData, "")
-			
+
 			// Test that it implements the interface by calling interface methods
 			Expect(webpageObj.GetURL()).To(Equal("https://example.com/test"))
 			Expect(webpageObj.GetTitle()).To(Equal("Test Page"))

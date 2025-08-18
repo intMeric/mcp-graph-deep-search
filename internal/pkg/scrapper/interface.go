@@ -14,19 +14,15 @@ type WebScraper interface {
 }
 
 type ScrapedData struct {
-	URL         string            `json:"url"`
-	Title       string            `json:"title"`
-	Text        string            `json:"text"`
-	HTMLBody    string            `json:"html_body"`
-	Links       []Link            `json:"links"`
-	Images      []Image           `json:"images"`
-	Forms       []Form            `json:"forms"`
-	Scripts     []string          `json:"scripts"`
-	Stylesheets []string          `json:"stylesheets"`
-	MetaTags    map[string]string `json:"meta_tags"`
-	Headers     map[string]string `json:"headers"`
-	StatusCode  int               `json:"status_code"`
-	ScrapedAt   time.Time         `json:"scraped_at"`
+	URL        string            `json:"url"`
+	Title      string            `json:"title"`
+	Text       string            `json:"text"`
+	HTMLBody   string            `json:"html_body"`
+	Links      []Link            `json:"links"`
+	MetaTags   map[string]string `json:"meta_tags"`
+	Headers    map[string]string `json:"headers"`
+	StatusCode int               `json:"status_code"`
+	ScrapedAt  time.Time         `json:"scraped_at"`
 }
 
 type Link struct {
@@ -37,30 +33,6 @@ type Link struct {
 	Download     string `json:"download,omitempty"`
 	ResourceType string `json:"resource_type,omitempty"`
 	IsExternal   bool   `json:"is_external"`
-}
-
-type Image struct {
-	URL    string `json:"url"`
-	Alt    string `json:"alt"`
-	Title  string `json:"title,omitempty"`
-	Width  string `json:"width,omitempty"`
-	Height string `json:"height,omitempty"`
-}
-
-type Form struct {
-	Action string      `json:"action"`
-	Method string      `json:"method"`
-	Name   string      `json:"name,omitempty"`
-	ID     string      `json:"id,omitempty"`
-	Fields []FormField `json:"fields"`
-}
-
-type FormField struct {
-	Name        string `json:"name"`
-	Type        string `json:"type"`
-	Value       string `json:"value,omitempty"`
-	Placeholder string `json:"placeholder,omitempty"`
-	Required    bool   `json:"required"`
 }
 
 type ScrapingOptions struct {
@@ -74,25 +46,19 @@ type ScrapingOptions struct {
 	ExtractText       bool          `json:"extract_text"`
 	ExtractHTML       bool          `json:"extract_html"`
 	ExtractLinks      bool          `json:"extract_links"`
-	ExtractImages     bool          `json:"extract_images"`
-	ExtractForms      bool          `json:"extract_forms"`
-	ExtractScripts    bool          `json:"extract_scripts"`
 	ExtractMeta       bool          `json:"extract_meta"`
 }
 
 func DefaultScrapingOptions() *ScrapingOptions {
 	return &ScrapingOptions{
-		Timeout:         30 * time.Second,
+		Timeout:         10 * time.Second,
 		UserAgent:       "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; MGDS",
 		FollowRedirects: true,
 		MaxDepth:        1,
-		RateLimitDelay:  1 * time.Second,
+		RateLimitDelay:  200 * time.Millisecond,
 		ExtractText:     true,
-		ExtractHTML:     true,
+		ExtractHTML:     false,
 		ExtractLinks:    true,
-		ExtractImages:   true,
-		ExtractForms:    true,
-		ExtractScripts:  true,
 		ExtractMeta:     true,
 	}
 }

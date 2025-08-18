@@ -132,7 +132,7 @@ The server provides the following tools for Claude Desktop integration:
 - `analyze_webpage`: Analyze specific webpage content and build graph relationships
 
 ### Document Management Tools
-- `get_document`: Intelligently retrieve documents with automatic analysis fallback
+- `get_document`: Intelligently retrieve existing documents with automatic analysis fallback
 
 ### Graph Maintenance Tools
 - `delete_node`: Delete specific nodes from the knowledge graph

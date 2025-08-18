@@ -27,7 +27,6 @@ func (m *mockWebScraper) Scrape(ctx context.Context, url string, options *scrapp
 		Text:      "This is test content about machine learning and artificial intelligence",
 		MetaTags:  map[string]string{"description": "Test page"},
 		Links:     []scrapper.Link{{URL: "https://example.com/other", Text: "Other Page"}},
-		Images:    []scrapper.Image{},
 		ScrapedAt: time.Now(),
 	}, nil
 }
