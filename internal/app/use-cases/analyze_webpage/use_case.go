@@ -65,6 +65,8 @@ func (uc *analyzeWebpageUseCase) Execute(ctx context.Context, request *AnalyzeWe
 	return &AnalyzeWebpageResponse{
 		URL:               request.URL,
 		DocumentID:        documentID,
+		Title:             webpageObj.GetTitle(),
+		Text:              webpageObj.GetText(),
 		ExtractedKeywords: extractKeywordStrings(webpageObj.GetTextAnalysis().Keywords),
 		RelationsCreated:  totalRelationsCreated,
 		RelationErrors:    allRelationErrors,

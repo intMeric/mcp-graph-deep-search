@@ -140,6 +140,8 @@ var _ = Describe("AnalyzeWebpageUseCase", func() {
 				Expect(response).NotTo(BeNil())
 				Expect(response.URL).To(Equal("https://example.com/test"))
 				Expect(response.DocumentID).To(Equal("example.com/test"))
+				Expect(response.Title).To(Equal("Test Page"))
+				Expect(response.Text).To(Equal("This is test content about machine learning and artificial intelligence"))
 				Expect(response.ExtractedKeywords).To(ContainElement("machine"))
 				Expect(response.RelationsCreated).To(BeNumerically(">", 0))
 			})
