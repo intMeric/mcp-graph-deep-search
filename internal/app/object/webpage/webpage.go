@@ -105,10 +105,6 @@ func (w *Webpage) GetScrapedData() *scrapper.ScrapedData {
 	return w.ScrapedData
 }
 
-func (w *Webpage) HasPII() bool {
-	return w.TextAnalysis != nil && w.TextAnalysis.HasPII()
-}
-
 func (w *Webpage) HasKeywords() bool {
 	return w.TextAnalysis != nil && w.TextAnalysis.HasKeywords()
 }
@@ -119,7 +115,6 @@ func (w *Webpage) ToDocument() map[string]any {
 		"title":      w.ScrapedData.Title,
 		"text":       w.ScrapedData.Text,
 		"meta_tags":  w.ScrapedData.MetaTags,
-		"pii":        w.TextAnalysis.PIIResult,
 		"keywords":   w.TextAnalysis.Keywords,
 		"links":      w.ScrapedData.Links,
 		"images":     w.ScrapedData.Images,

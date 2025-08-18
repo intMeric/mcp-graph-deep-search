@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 
 	"mgds/internal/pkg/keyword"
-	"mgds/internal/pkg/pii"
 )
 
 type TextAnalysisService interface {
@@ -14,13 +13,8 @@ type TextAnalysisService interface {
 }
 
 type TextAnalysisResult struct {
-	Text      string            `json:"text"`
-	PIIResult *pii.Result       `json:"pii_result"`
-	Keywords  []keyword.Keyword `json:"keywords"`
-}
-
-func (r *TextAnalysisResult) HasPII() bool {
-	return r.PIIResult != nil && !r.PIIResult.IsEmpty()
+	Text     string            `json:"text"`
+	Keywords []keyword.Keyword `json:"keywords"`
 }
 
 func (r *TextAnalysisResult) HasKeywords() bool {

@@ -9,26 +9,7 @@ import (
 
 	"mgds/internal/app/services/text_analysis"
 	"mgds/internal/pkg/keyword"
-	"mgds/internal/pkg/pii"
 )
-
-type mockPIIExtractor struct {
-	result     *pii.Result
-	shouldFail bool
-	closed     bool
-}
-
-func (m *mockPIIExtractor) ExtractPII(ctx context.Context, text string) (*pii.Result, error) {
-	if m.shouldFail {
-		return nil, errors.New("PII extraction failed")
-	}
-	return m.result, nil
-}
-
-func (m *mockPIIExtractor) Close() error {
-	m.closed = true
-	return nil
-}
 
 type mockKeywordExtractor struct {
 	keywords   []keyword.Keyword
@@ -58,17 +39,15 @@ func (m *mockKeywordExtractor) Close() error {
 
 var _ = Describe("TextAnalysisService", func() {
 	var (
+		keywordExtractor *mockKeywordExtractor
 		service          text_analysis.TextAnalysisService
 		ctx              context.Context
-		piiExtractor     *mockPIIExtractor
-		keywordExtractor *mockKeywordExtractor
 	)
 
 	BeforeEach(func() {
 		ctx = context.Background()
-		piiExtractor = &mockPIIExtractor{}
 		keywordExtractor = &mockKeywordExtractor{}
-		service = text_analysis.NewTextAnalysisService(piiExtractor, keywordExtractor)
+		service = text_analysis.NewTextAnalysisService(keywordExtractor)
 	})
 
 	AfterEach(func() {
@@ -78,28 +57,15 @@ var _ = Describe("TextAnalysisService", func() {
 	})
 
 	Describe("AnalyzeText", func() {
-		Context("with valid text containing PII and keywords", func() {
-			It("should extract both PII and keywords", func() {
-				text := "Contact john.doe@example.com for more information about machine learning"
-
-				piiResult := &pii.Result{
-					Total: 1,
-					Entities: []pii.Entity{
-						{
-							Type:  pii.PIITypeEmail,
-							Value: "john.doe@example.com",
-							Count: 1,
-						},
-					},
-					Stats: map[string]int{"email": 1},
-				}
-				piiExtractor.result = piiResult
+		Context("with valid text containing keywords", func() {
+			It("should extract keywords", func() {
+				text := "This is a text about machine learning and artificial intelligence"
 
 				keywords := []keyword.Keyword{
-					{Text: "contact", Frequency: 1, Score: 0.8},
-					{Text: "information", Frequency: 1, Score: 0.7},
 					{Text: "machine", Frequency: 1, Score: 0.9},
 					{Text: "learning", Frequency: 1, Score: 0.9},
+					{Text: "artificial", Frequency: 1, Score: 0.8},
+					{Text: "intelligence", Frequency: 1, Score: 0.8},
 				}
 				keywordExtractor.keywords = keywords
 
@@ -108,34 +74,29 @@ var _ = Describe("TextAnalysisService", func() {
 				Expect(err).NotTo(HaveOccurred())
 				Expect(result).NotTo(BeNil())
 				Expect(result.Text).To(Equal(text))
-				Expect(result.HasPII()).To(BeTrue())
 				Expect(result.HasKeywords()).To(BeTrue())
-				Expect(result.PIIResult.Total).To(Equal(1))
 				Expect(len(result.Keywords)).To(Equal(4))
 			})
 		})
 
-		Context("when PII extraction fails", func() {
-			It("should return an error", func() {
-				text := "Some text"
-				piiExtractor.shouldFail = true
+		Context("with text containing no keywords", func() {
+			It("should return empty keywords", func() {
+				text := "Some simple text"
+				keywordExtractor.keywords = []keyword.Keyword{}
 
 				result, err := service.AnalyzeText(ctx, text)
 
-				Expect(err).To(HaveOccurred())
-				Expect(result).To(BeNil())
+				Expect(err).NotTo(HaveOccurred())
+				Expect(result).NotTo(BeNil())
+				Expect(result.Text).To(Equal(text))
+				Expect(result.HasKeywords()).To(BeFalse())
+				Expect(len(result.Keywords)).To(Equal(0))
 			})
 		})
 
 		Context("when keyword extraction fails", func() {
 			It("should return an error", func() {
 				text := "Some text"
-				piiResult := &pii.Result{
-					Total:    0,
-					Entities: []pii.Entity{},
-					Stats:    map[string]int{},
-				}
-				piiExtractor.result = piiResult
 				keywordExtractor.shouldFail = true
 
 				result, err := service.AnalyzeText(ctx, text)
@@ -147,11 +108,10 @@ var _ = Describe("TextAnalysisService", func() {
 	})
 
 	Describe("Close", func() {
-		It("should close both extractors without error", func() {
+		It("should close keyword extractor without error", func() {
 			err := service.Close()
 
 			Expect(err).NotTo(HaveOccurred())
-			Expect(piiExtractor.closed).To(BeTrue())
 			Expect(keywordExtractor.closed).To(BeTrue())
 		})
 	})

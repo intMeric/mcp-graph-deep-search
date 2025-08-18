@@ -56,16 +56,14 @@ func (uc *analyzeWebpageUseCase) Execute(ctx context.Context, request *AnalyzeWe
 
 	linkNodes := webpageObj.GetLinkNodes()
 
-	piiRelationsCreated, piiRelationErrors := uc.createPIIRelations(ctx, webpageNode, webpageObj)
 	linkRelationsCreated, linkRelationErrors := uc.createLinkRelations(ctx, webpageNode, linkNodes)
 
-	totalRelationsCreated := piiRelationsCreated + linkRelationsCreated
-	allRelationErrors := append(piiRelationErrors, linkRelationErrors...)
+	totalRelationsCreated := linkRelationsCreated
+	allRelationErrors := linkRelationErrors
 
 	return &AnalyzeWebpageResponse{
 		URL:               request.URL,
 		DocumentID:        documentID,
-		ExtractedPII:      map[string]any{"entities": webpageObj.GetTextAnalysis().PIIResult},
 		ExtractedKeywords: extractKeywordStrings(webpageObj.GetTextAnalysis().Keywords),
 		RelationsCreated:  totalRelationsCreated,
 		RelationErrors:    allRelationErrors,
@@ -96,37 +94,6 @@ func (uc *analyzeWebpageUseCase) storeDocument(ctx context.Context, documentID s
 	return nil
 }
 
-func (uc *analyzeWebpageUseCase) createPIIRelations(ctx context.Context, sourceNode *node.Node, webpageObj webpage.WebpageInterface) (int, []RelationError) {
-	relationsCreated := 0
-	var relationErrors []RelationError
-
-	textAnalysis := webpageObj.GetTextAnalysis()
-	if textAnalysis.PIIResult == nil {
-		return relationsCreated, relationErrors
-	}
-
-	for _, piiEntity := range textAnalysis.PIIResult.Entities {
-		piiNode := piiEntity.ToNode()
-
-		_, err := uc.linkService.CreateLink(ctx, sourceNode, piiNode, constant.PIIRelation)
-		if err != nil {
-			relationError := RelationError{
-				Type:       "PII",
-				Source:     sourceNode.ID,
-				Target:     piiNode.ID,
-				TargetName: piiNode.DisplayName,
-				Error:      err.Error(),
-			}
-			relationErrors = append(relationErrors, relationError)
-			log.Printf("Failed to create PII relation from %s to %s (%s): %v",
-				sourceNode.ID, piiNode.ID, piiNode.DisplayName, err)
-		} else {
-			relationsCreated++
-		}
-	}
-
-	return relationsCreated, relationErrors
-}
 
 func (uc *analyzeWebpageUseCase) createLinkRelations(ctx context.Context, sourceNode *node.Node, linkNodes []*node.Node) (int, []RelationError) {
 	relationsCreated := 0

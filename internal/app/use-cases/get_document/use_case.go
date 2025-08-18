@@ -111,7 +111,6 @@ func (uc *getDocumentUseCase) Execute(ctx context.Context, req *GetDocumentReque
 		response.AnalysisResult = &AnalysisResult{
 			DocumentID:        analyzeResp.DocumentID,
 			ExtractedKeywords: analyzeResp.ExtractedKeywords,
-			ExtractedPII:      extractPIIList(analyzeResp.ExtractedPII),
 			CreatedRelations:  analyzeResp.RelationsCreated,
 			Errors:            extractErrorMessages(analyzeResp.RelationErrors),
 		}
@@ -126,7 +125,6 @@ func (uc *getDocumentUseCase) Execute(ctx context.Context, req *GetDocumentReque
 	response.AnalysisResult = &AnalysisResult{
 		DocumentID:        analyzeResp.DocumentID,
 		ExtractedKeywords: analyzeResp.ExtractedKeywords,
-		ExtractedPII:      extractPIIList(analyzeResp.ExtractedPII),
 		CreatedRelations:  analyzeResp.RelationsCreated,
 		Errors:            extractErrorMessages(analyzeResp.RelationErrors),
 	}
@@ -159,20 +157,6 @@ func extractURLFromNode(n *node.Node) string {
 	}
 
 	return ""
-}
-
-func extractPIIList(piiMap map[string]any) []string {
-	var piiList []string
-	for entityType, entities := range piiMap {
-		if entitiesSlice, ok := entities.([]interface{}); ok {
-			for _, entity := range entitiesSlice {
-				if entityStr, ok := entity.(string); ok {
-					piiList = append(piiList, fmt.Sprintf("%s: %s", entityType, entityStr))
-				}
-			}
-		}
-	}
-	return piiList
 }
 
 func extractErrorMessages(relationErrors []analyze_webpage.RelationError) []string {

@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"mgds/internal/app/services/graph_pruner"
-	"mgds/internal/app/use-cases/prune_graph"
+	"mgds/internal/app/use-cases/graph/prune_graph"
 	"mgds/internal/pkg/graph"
 	"mgds/internal/pkg/node"
 )

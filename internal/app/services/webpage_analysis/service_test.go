@@ -11,7 +11,6 @@ import (
 	"mgds/internal/app/services/text_analysis"
 	"mgds/internal/app/services/webpage_analysis"
 	"mgds/internal/pkg/keyword"
-	"mgds/internal/pkg/pii"
 	"mgds/internal/pkg/scrapper"
 )
 
@@ -50,13 +49,6 @@ type mockTextAnalysisService struct{}
 func (m *mockTextAnalysisService) AnalyzeText(ctx context.Context, text string) (*text_analysis.TextAnalysisResult, error) {
 	return &text_analysis.TextAnalysisResult{
 		Text: text,
-		PIIResult: &pii.Result{
-			Total: 2,
-			Entities: []pii.Entity{
-				{Type: "email", Value: "email@example.com", Count: 1},
-				{Type: "phone", Value: "123-456-7890", Count: 1},
-			},
-		},
 		Keywords: []keyword.Keyword{
 			{Text: "test", Score: 0.9, Frequency: 1},
 			{Text: "content", Score: 0.8, Frequency: 2},
@@ -127,7 +119,6 @@ var _ = Describe("WebpageAnalysisService", func() {
 				webpageObj, err := service.AnalyzeWebpage(ctx, "https://example.com/test", nil)
 
 				Expect(err).NotTo(HaveOccurred())
-				Expect(webpageObj.HasPII()).To(BeTrue())
 				Expect(webpageObj.HasKeywords()).To(BeTrue())
 			})
 		})

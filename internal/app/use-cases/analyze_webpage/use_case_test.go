@@ -14,7 +14,6 @@ import (
 	"mgds/internal/app/use-cases/analyze_webpage"
 	"mgds/internal/pkg/keyword"
 	"mgds/internal/pkg/node"
-	"mgds/internal/pkg/pii"
 	"mgds/internal/pkg/scrapper"
 )
 
@@ -28,7 +27,7 @@ func (m *mockWebpageAnalysisService) AnalyzeWebpage(ctx context.Context, url str
 	scrapedData := &scrapper.ScrapedData{
 		URL:       url,
 		Title:     "Test Page",
-		Text:      "This is test content with email@example.com and phone 123-456-7890",
+		Text:      "This is test content about machine learning and artificial intelligence",
 		MetaTags:  map[string]string{"description": "Test page"},
 		Links:     []scrapper.Link{{URL: "https://example.com/other", Text: "Other Page"}},
 		Images:    []scrapper.Image{},
@@ -36,18 +35,12 @@ func (m *mockWebpageAnalysisService) AnalyzeWebpage(ctx context.Context, url str
 	}
 
 	textAnalysis := &text_analysis.TextAnalysisResult{
-		Text: "This is test content with email@example.com and phone 123-456-7890",
-		PIIResult: &pii.Result{
-			Total: 2,
-			Entities: []pii.Entity{
-				{Type: "email", Value: "email@example.com", Count: 1},
-				{Type: "phone", Value: "123-456-7890", Count: 1},
-			},
-		},
+		Text: "This is test content about machine learning and artificial intelligence",
 		Keywords: []keyword.Keyword{
-			{Text: "test", Score: 0.9, Frequency: 1},
-			{Text: "content", Score: 0.8, Frequency: 2},
-			{Text: "example", Score: 0.7, Frequency: 1},
+			{Text: "machine", Score: 0.9, Frequency: 1},
+			{Text: "learning", Score: 0.9, Frequency: 1},
+			{Text: "artificial", Score: 0.8, Frequency: 1},
+			{Text: "intelligence", Score: 0.8, Frequency: 1},
 		},
 	}
 
@@ -149,8 +142,7 @@ var _ = Describe("AnalyzeWebpageUseCase", func() {
 				Expect(response).NotTo(BeNil())
 				Expect(response.URL).To(Equal("https://example.com/test"))
 				Expect(response.DocumentID).To(Equal("example.com/test"))
-				Expect(response.ExtractedPII).NotTo(BeEmpty())
-				Expect(response.ExtractedKeywords).To(ContainElement("test"))
+				Expect(response.ExtractedKeywords).To(ContainElement("machine"))
 				Expect(response.RelationsCreated).To(BeNumerically(">", 0))
 			})
 
@@ -174,7 +166,7 @@ var _ = Describe("AnalyzeWebpageUseCase", func() {
 
 				Expect(err).NotTo(HaveOccurred())
 				Expect(mockLinkSvc.createdLinks).NotTo(BeEmpty())
-				Expect(string(mockLinkSvc.createdLinks[0].relType)).To(Equal("pii_relation"))
+				Expect(mockLinkSvc.createdLinks[0].relType).To(Equal("navigation_link"))
 			})
 		})
 

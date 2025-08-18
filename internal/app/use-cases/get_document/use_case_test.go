@@ -89,7 +89,6 @@ var _ = Describe("SmartDocumentRetrievalUseCase", func() {
 				URL:               "https://example.com/test",
 				DocumentID:        "new-doc-id",
 				ExtractedKeywords: []string{"test", "keyword"},
-				ExtractedPII:      map[string]any{"email": []interface{}{"test@example.com"}},
 				RelationsCreated:  2,
 				RelationErrors:    []analyze_webpage.RelationError{},
 			},

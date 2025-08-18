@@ -153,13 +153,6 @@ This is a Go-based MCP server providing deep search capabilities through an LLM-
 - Configurable options: minimum word length, maximum keywords, stop word filtering
 - Two extraction methods: simple string list or keywords with frequency scores
 
-**PII Extraction (`internal/pkg/pii/`)**
-
-- Simple interface for extracting Personally Identifiable Information from text
-- Regex-based detection of emails, phones, credit cards, SSNs, IP addresses, IBANs
-- Built on intMeric/pii-extractor library
-- Returns structured results with entity types, values, counts, and contexts
-
 **Graph Database (`internal/pkg/graph/`)**
 
 - Interface for graph database operations with Neo4j implementation
@@ -207,7 +200,6 @@ Key external dependencies:
 - `github.com/redis/go-redis/v9`: Redis client for caching and queuing
 - `github.com/hashicorp/golang-lru/v2`: LRU cache implementation
 - `github.com/jdkato/prose/v2`: Natural language processing for keyword extraction
-- `github.com/intMeric/pii-extractor`: PII detection and extraction
 - `github.com/onsi/ginkgo/v2` + `github.com/onsi/gomega`: BDD testing framework
 - `github.com/neo4j/neo4j-go-driver/v5`: Neo4j database driver for graph operations
 - `github.com/PuerkitoBio/goquery`: HTML document traversal and manipulation for serialization
@@ -247,12 +239,12 @@ Key external dependencies:
 
 **Text Analysis Service (`internal/app/services/text_analysis/`)**
 
-- Composite service combining PII extraction and keyword extraction
+- Service for keyword extraction and analysis from text content
 - Single interface for analyzing text content with structured results
 - Automatic HTML parsing and text extraction using serializer package
-- Methods to check for presence of PII or keywords in results
+- Methods to check for presence of keywords in results
 - JSON serialization support for results
-- Built on top of existing PII and keyword extraction packages
+- Built on top of keyword extraction packages
 
 **Webpage Analysis Service (`internal/app/services/webpage_analysis/`)**
 
@@ -284,7 +276,7 @@ Key external dependencies:
 
 - Comprehensive webpage analysis workflow combining scraping, content analysis, and graph storage
 - Request validation and response structuring with detailed error reporting
-- Integration of web scraping, PII extraction, keyword extraction, and graph relationship creation
+- Integration of web scraping, keyword extraction, and graph relationship creation
 - Handles relation creation errors gracefully with detailed error context
 - Returns document ID, extracted data, and relation statistics
 
@@ -313,7 +305,7 @@ Key external dependencies:
     - `graph_explorer/`: Graph database exploration and analysis
     - `link/`: Graph relationship creation with validation
     - `graph_pruner/`: Graph cleanup and maintenance service
-    - `text_analysis/`: Composite text analysis combining PII and keywords with HTML parsing
+    - `text_analysis/`: Text analysis service for keyword extraction with HTML parsing
     - `webpage_analysis/`: Complete webpage analysis service with node generation
   - `use-cases/`: MCP tool implementations
     - `explore_graph/`: Graph exploration tools (overview, nodes by type, relations, connected nodes)
@@ -326,7 +318,6 @@ Key external dependencies:
   - `cache/`: Generic caching interfaces and implementations  
   - `queue/`: Message queue interfaces and Redis implementations
   - `keyword/`: Keyword extraction from text using prose library
-  - `pii/`: PII extraction using intMeric/pii-extractor library
   - `node/`: Node type definitions for graph database entities
   - `env/`: Environment configuration utilities
   - `graph/`: Graph database interfaces and Neo4j implementation with typed nodes

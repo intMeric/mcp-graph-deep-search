@@ -17,16 +17,15 @@ import (
 	"mgds/internal/app/services/text_analysis"
 	"mgds/internal/app/services/webpage_analysis"
 	"mgds/internal/app/use-cases/analyze_webpage"
-	"mgds/internal/app/use-cases/explore_graph"
-	"mgds/internal/app/use-cases/prune_graph"
-	"mgds/internal/app/use-cases/search_and_analyze"
 	"mgds/internal/app/use-cases/get_document"
+	"mgds/internal/app/use-cases/graph/explore_graph"
+	"mgds/internal/app/use-cases/graph/prune_graph"
+	"mgds/internal/app/use-cases/search_and_analyze"
 	"mgds/internal/pkg/configuration"
 	"mgds/internal/pkg/database"
 	"mgds/internal/pkg/graph"
 	"mgds/internal/pkg/keyword"
 	"mgds/internal/pkg/node"
-	"mgds/internal/pkg/pii"
 	"mgds/internal/pkg/scrapper"
 )
 
@@ -103,28 +102,22 @@ func main() {
 	log.Printf("Initializing analyze webpage use case...")
 	if graphDB != nil && db != nil {
 		webScraper := scrapper.NewWebScraper()
-		
+
 		keywordExtractor, err4 := keyword.NewExtractor()
 		if err4 != nil {
 			log.Printf("Warning: Failed to initialize keyword extractor: %v", err4)
 			log.Printf("Analyze webpage tools will return errors")
 		} else {
-			piiExtractor, err5 := pii.NewPIIExtractor()
-			if err5 != nil {
-				log.Printf("Warning: Failed to initialize PII extractor: %v", err5)
-				log.Printf("Analyze webpage tools will return errors")
-			} else {
-				textAnalyzer := text_analysis.NewTextAnalysisService(piiExtractor, keywordExtractor)
-				webpageAnalyzer := webpage_analysis.NewWebpageAnalysisService(webScraper, textAnalyzer)
-				linkService := link.NewDirectLinkService(graphDB)
-				
-				analyzeWebpageUseCase = analyze_webpage.NewAnalyzeWebpageUseCase(
-					webpageAnalyzer,
-					linkService,
-					db,
-				)
-				log.Printf("Analyze webpage use case initialized successfully")
-			}
+			textAnalyzer := text_analysis.NewTextAnalysisService(keywordExtractor)
+			webpageAnalyzer := webpage_analysis.NewWebpageAnalysisService(webScraper, textAnalyzer)
+			linkService := link.NewDirectLinkService(graphDB)
+
+			analyzeWebpageUseCase = analyze_webpage.NewAnalyzeWebpageUseCase(
+				webpageAnalyzer,
+				linkService,
+				db,
+			)
+			log.Printf("Analyze webpage use case initialized successfully")
 		}
 	} else {
 		log.Printf("Warning: Dependencies not available for analyze webpage use case")
@@ -171,7 +164,6 @@ func main() {
 	if err := registerSearchAndAnalyzeTools(server); err != nil {
 		log.Fatalf("Failed to register search and analyze tools: %v", err)
 	}
-
 
 	if err := registerAnalyzeWebpageTools(server); err != nil {
 		log.Fatalf("Failed to register analyze webpage tools: %v", err)
@@ -223,7 +215,6 @@ type SearchAndAnalyzeArgs struct {
 	Language   string `json:"language" jsonschema:"description=Search language (default: en)"`
 	MaxResults int    `json:"maxResults" jsonschema:"description=Maximum number of results to analyze (default: 10),minimum=1,maximum=50"`
 }
-
 
 // Analyze webpage tool arguments
 type AnalyzeWebpageArgs struct {
@@ -453,7 +444,6 @@ func registerSearchAndAnalyzeTools(server *mcp_golang.Server) error {
 
 	return nil
 }
-
 
 func registerAnalyzeWebpageTools(server *mcp_golang.Server) error {
 	// Tool: Analyze Webpage

@@ -5,19 +5,16 @@ import (
 	"strings"
 
 	"mgds/internal/pkg/keyword"
-	"mgds/internal/pkg/pii"
 	"mgds/internal/pkg/serializer"
 )
 
 type textAnalysisService struct {
-	piiExtractor     pii.Extractor
 	keywordExtractor keyword.Extractor
 	serializer       serializer.HTMLSerializer
 }
 
-func NewTextAnalysisService(piiExtractor pii.Extractor, keywordExtractor keyword.Extractor) TextAnalysisService {
+func NewTextAnalysisService(keywordExtractor keyword.Extractor) TextAnalysisService {
 	return &textAnalysisService{
-		piiExtractor:     piiExtractor,
 		keywordExtractor: keywordExtractor,
 		serializer:       serializer.NewGoquerySerializer(nil),
 	}
@@ -40,12 +37,6 @@ func (s *textAnalysisService) AnalyzeText(ctx context.Context, text string) (*Te
 		plainText = text
 	}
 
-	piiResult, err := s.piiExtractor.ExtractPII(ctx, plainText)
-	if err != nil {
-		return nil, err
-	}
-	result.PIIResult = piiResult
-
 	keywords, err := s.keywordExtractor.ExtractKeywordsWithScores(ctx, plainText, keyword.DefaultOptions())
 	if err != nil {
 		return nil, err
@@ -56,9 +47,6 @@ func (s *textAnalysisService) AnalyzeText(ctx context.Context, text string) (*Te
 }
 
 func (s *textAnalysisService) Close() error {
-	if err := s.piiExtractor.Close(); err != nil {
-		return err
-	}
 	if err := s.keywordExtractor.Close(); err != nil {
 		return err
 	}

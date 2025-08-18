@@ -7,7 +7,6 @@ import (
 	"mgds/internal/app/object/webpage"
 	"mgds/internal/app/services/text_analysis"
 	"mgds/internal/pkg/keyword"
-	"mgds/internal/pkg/pii"
 	"mgds/internal/pkg/scrapper"
 )
 
@@ -33,8 +32,7 @@ var _ = Describe("Webpage", func() {
 		}
 
 		textAnalysis = &text_analysis.TextAnalysisResult{
-			Text:      scrapedData.Text,
-			PIIResult: &pii.Result{},
+			Text: scrapedData.Text,
 			Keywords: []keyword.Keyword{
 				{Text: "test", Score: 0.8},
 				{Text: "content", Score: 0.6},
@@ -152,29 +150,6 @@ var _ = Describe("Webpage", func() {
 		})
 	})
 
-	Describe("HasPII", func() {
-		Context("when PII exists", func() {
-			BeforeEach(func() {
-				textAnalysis.PIIResult = &pii.Result{
-					Total: 1,
-					Entities: []pii.Entity{
-						{Type: pii.PIITypeEmail, Value: "test@example.com", Count: 1},
-					},
-				}
-				testWebpage = webpage.NewWebpage(scrapedData, textAnalysis)
-			})
-
-			It("should return true", func() {
-				Expect(testWebpage.HasPII()).To(BeTrue())
-			})
-		})
-
-		Context("when no PII exists", func() {
-			It("should return false", func() {
-				Expect(testWebpage.HasPII()).To(BeFalse())
-			})
-		})
-	})
 
 	Describe("ToDocument", func() {
 		It("should return a document with all webpage data", func() {
@@ -185,7 +160,6 @@ var _ = Describe("Webpage", func() {
 			Expect(document["title"]).To(Equal("Test Page"))
 			Expect(document["text"]).To(Equal("This is a test page with some content"))
 			Expect(document["meta_tags"]).NotTo(BeNil())
-			Expect(document["pii"]).NotTo(BeNil())
 			Expect(document["keywords"]).NotTo(BeNil())
 			Expect(document["links"]).NotTo(BeNil())
 			Expect(document["images"]).NotTo(BeNil())
@@ -195,7 +169,7 @@ var _ = Describe("Webpage", func() {
 		It("should contain all expected keys", func() {
 			document := testWebpage.ToDocument()
 
-			expectedKeys := []string{"url", "title", "text", "meta_tags", "pii", "keywords", "links", "images", "scraped_at"}
+			expectedKeys := []string{"url", "title", "text", "meta_tags", "keywords", "links", "images", "scraped_at"}
 			for _, key := range expectedKeys {
 				Expect(document).To(HaveKey(key))
 			}

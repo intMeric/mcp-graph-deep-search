@@ -78,7 +78,7 @@ Once configured, Claude Desktop will have access to these MCP tools:
 Performs deep web search with knowledge graph construction:
 
 - Searches the web using SearXNG
-- Analyzes webpage content for PII and keywords
+- Analyzes webpage content for keywords
 - Builds explorable graph nodes and relationships
 - Parameters: query, time_range, category, language, num_results
 
@@ -88,7 +88,7 @@ Analyzes a specific webpage:
 
 - Scrapes webpage content
 - Extracts text, links, images, and metadata
-- Performs PII and keyword analysis
+- Performs keyword analysis
 - Creates graph nodes and relationships
 - Parameters: url
 

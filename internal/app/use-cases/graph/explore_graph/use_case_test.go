@@ -8,7 +8,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"mgds/internal/app/services/graph_explorer"
-	"mgds/internal/app/use-cases/explore_graph"
+	"mgds/internal/app/use-cases/graph/explore_graph"
 	"mgds/internal/pkg/graph"
 	"mgds/internal/pkg/node"
 )

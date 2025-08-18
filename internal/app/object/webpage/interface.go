@@ -16,6 +16,5 @@ type WebpageInterface interface {
 	GetText() string
 	GetTextAnalysis() *text_analysis.TextAnalysisResult
 	GetScrapedData() *scrapper.ScrapedData
-	HasPII() bool
 	HasKeywords() bool
 }

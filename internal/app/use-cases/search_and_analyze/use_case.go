@@ -13,7 +13,6 @@ import (
 	"mgds/internal/pkg/database"
 	"mgds/internal/pkg/graph"
 	"mgds/internal/pkg/keyword"
-	"mgds/internal/pkg/pii"
 	"mgds/internal/pkg/scrapper"
 	"mgds/internal/pkg/search_engine"
 )
@@ -46,14 +45,7 @@ func NewSearchAndAnalyzeUseCase() (SearchAndAnalyzeUseCase, error) {
 		return nil, fmt.Errorf("failed to initialize keyword extractor: %w", err)
 	}
 
-	piiExtractor, err := pii.NewPIIExtractor()
-	if err != nil {
-		db.Close(context.Background())
-		graphDB.Close(context.Background())
-		return nil, fmt.Errorf("failed to initialize PII extractor: %w", err)
-	}
-
-	textAnalyzer := text_analysis.NewTextAnalysisService(piiExtractor, keywordExtractor)
+	textAnalyzer := text_analysis.NewTextAnalysisService(keywordExtractor)
 	webpageAnalyzer := webpage_analysis.NewWebpageAnalysisService(webScraper, textAnalyzer)
 	linkService := link.NewDirectLinkService(graphDB)
 
