@@ -162,14 +162,13 @@ var _ = Describe("Webpage", func() {
 			Expect(document["meta_tags"]).NotTo(BeNil())
 			Expect(document["keywords"]).NotTo(BeNil())
 			Expect(document["links"]).NotTo(BeNil())
-			Expect(document["images"]).NotTo(BeNil())
 			Expect(document["scraped_at"]).NotTo(BeNil())
 		})
 
 		It("should contain all expected keys", func() {
 			document := testWebpage.ToDocument()
 
-			expectedKeys := []string{"url", "title", "text", "meta_tags", "keywords", "links", "images", "scraped_at"}
+			expectedKeys := []string{"url", "title", "text", "meta_tags", "keywords", "links", "scraped_at"}
 			for _, key := range expectedKeys {
 				Expect(document).To(HaveKey(key))
 			}

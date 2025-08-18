@@ -117,7 +117,6 @@ func (w *Webpage) ToDocument() map[string]any {
 		"meta_tags":  w.ScrapedData.MetaTags,
 		"keywords":   w.TextAnalysis.Keywords,
 		"links":      w.ScrapedData.Links,
-		"images":     w.ScrapedData.Images,
 		"scraped_at": w.ScrapedData.ScrapedAt,
 	}
 }
