@@ -8,28 +8,27 @@ import (
 
 	"mgds/internal/app/object/webpage"
 	"mgds/internal/app/services/link"
-	"mgds/internal/app/services/webpage_analysis"
 	"mgds/internal/constant"
 	"mgds/internal/pkg/database"
-	"mgds/internal/pkg/keyword"
 	"mgds/internal/pkg/node"
+	"mgds/internal/pkg/scrapper"
 )
 
 type analyzeWebpageUseCase struct {
-	webpageAnalysis webpage_analysis.WebpageAnalysisService
-	linkService     link.LinkService
-	database        database.Database
+	webScraper  scrapper.WebScraper
+	linkService link.LinkService
+	database    database.Database
 }
 
 func NewAnalyzeWebpageUseCase(
-	webpageAnalysis webpage_analysis.WebpageAnalysisService,
+	webScraper scrapper.WebScraper,
 	linkService link.LinkService,
 	database database.Database,
 ) AnalyzeWebpageUseCase {
 	return &analyzeWebpageUseCase{
-		webpageAnalysis: webpageAnalysis,
-		linkService:     linkService,
-		database:        database,
+		webScraper:  webScraper,
+		linkService: linkService,
+		database:    database,
 	}
 }
 
@@ -38,11 +37,14 @@ func (uc *analyzeWebpageUseCase) Execute(ctx context.Context, request *AnalyzeWe
 		return nil, err
 	}
 
-	// Use the webpage analysis service to do the full analysis
-	webpageObj, err := uc.webpageAnalysis.AnalyzeWebpage(ctx, request.URL, nil)
+	// Scrape the webpage directly
+	scrapedData, err := uc.webScraper.Scrape(ctx, request.URL, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to analyze webpage: %w", err)
+		return nil, fmt.Errorf("failed to scrape webpage: %w", err)
 	}
+
+	// Build webpage object focused on content extraction only
+	webpageObj := webpage.Build(scrapedData, request.URL)
 
 	documentID := webpageObj.GetID()
 
@@ -63,13 +65,12 @@ func (uc *analyzeWebpageUseCase) Execute(ctx context.Context, request *AnalyzeWe
 	allRelationErrors := linkRelationErrors
 
 	return &AnalyzeWebpageResponse{
-		URL:               request.URL,
-		DocumentID:        documentID,
-		Title:             webpageObj.GetTitle(),
-		Text:              webpageObj.GetText(),
-		ExtractedKeywords: extractKeywordStrings(webpageObj.GetTextAnalysis().Keywords),
-		RelationsCreated:  totalRelationsCreated,
-		RelationErrors:    allRelationErrors,
+		URL:              request.URL,
+		DocumentID:       documentID,
+		Title:            webpageObj.GetTitle(),
+		Text:             webpageObj.GetText(),
+		RelationsCreated: totalRelationsCreated,
+		RelationErrors:   allRelationErrors,
 	}, nil
 }
 
@@ -127,10 +128,3 @@ func (uc *analyzeWebpageUseCase) createLinkRelations(ctx context.Context, source
 	return relationsCreated, relationErrors
 }
 
-func extractKeywordStrings(keywords []keyword.Keyword) []string {
-	result := make([]string, len(keywords))
-	for i, kw := range keywords {
-		result[i] = kw.Text
-	}
-	return result
-}

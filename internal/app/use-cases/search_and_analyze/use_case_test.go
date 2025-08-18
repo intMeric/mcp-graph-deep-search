@@ -59,10 +59,9 @@ var _ = Describe("SearchAndAnalyzeUseCase", func() {
 				TotalRelations:     25,
 				AnalysisResults: []search_and_analyze.AnalysisResult{
 					{
-						URL:               "https://example.com",
-						DocumentID:        "doc-123",
-						ExtractedKeywords: []string{"test", "keyword"},
-						RelationsCreated:  3,
+						URL:              "https://example.com",
+						DocumentID:       "doc-123",
+						RelationsCreated: 3,
 					},
 				},
 				AnalysisErrors: []search_and_analyze.AnalysisError{

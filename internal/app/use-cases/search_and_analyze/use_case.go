@@ -6,13 +6,10 @@ import (
 	"log"
 
 	"mgds/internal/app/services/link"
-	"mgds/internal/app/services/text_analysis"
-	"mgds/internal/app/services/webpage_analysis"
 	"mgds/internal/app/use-cases/analyze_webpage"
 	"mgds/internal/constant"
 	"mgds/internal/pkg/database"
 	"mgds/internal/pkg/graph"
-	"mgds/internal/pkg/keyword"
 	"mgds/internal/pkg/scrapper"
 	"mgds/internal/pkg/search_engine"
 )
@@ -37,21 +34,11 @@ func NewSearchAndAnalyzeUseCase() (SearchAndAnalyzeUseCase, error) {
 
 	// Initialize services
 	webScraper := scrapper.NewWebScraper()
-
-	keywordExtractor, err := keyword.NewExtractor()
-	if err != nil {
-		db.Close(context.Background())
-		graphDB.Close(context.Background())
-		return nil, fmt.Errorf("failed to initialize keyword extractor: %w", err)
-	}
-
-	textAnalyzer := text_analysis.NewTextAnalysisService(keywordExtractor)
-	webpageAnalyzer := webpage_analysis.NewWebpageAnalysisService(webScraper, textAnalyzer)
 	linkService := link.NewDirectLinkService(graphDB)
 
 	// Initialize analyze webpage use case
 	analyzeUseCase := analyze_webpage.NewAnalyzeWebpageUseCase(
-		webpageAnalyzer,
+		webScraper,
 		linkService,
 		db,
 	)
@@ -126,16 +113,14 @@ func (uc *searchAndAnalyzeUseCase) Execute(ctx context.Context, request *SearchA
 		response.TotalRelations += analyzeResponse.RelationsCreated
 
 		response.AnalysisResults = append(response.AnalysisResults, AnalysisResult{
-			URL:               result.URL,
-			DocumentID:        analyzeResponse.DocumentID,
-			ExtractedKeywords: analyzeResponse.ExtractedKeywords,
-			RelationsCreated:  analyzeResponse.RelationsCreated,
+			URL:              result.URL,
+			DocumentID:       analyzeResponse.DocumentID,
+			RelationsCreated: analyzeResponse.RelationsCreated,
 		})
 
-		log.Printf("✓ Analyzed %s: Document ID: %s, Keywords: %d, Relations: %d",
+		log.Printf("✓ Analyzed %s: Document ID: %s, Relations: %d",
 			result.URL,
 			analyzeResponse.DocumentID,
-			len(analyzeResponse.ExtractedKeywords),
 			analyzeResponse.RelationsCreated,
 		)
 

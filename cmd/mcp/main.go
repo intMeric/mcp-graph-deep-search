@@ -14,8 +14,6 @@ import (
 	"mgds/internal/app/services/graph_explorer"
 	"mgds/internal/app/services/graph_pruner"
 	"mgds/internal/app/services/link"
-	"mgds/internal/app/services/text_analysis"
-	"mgds/internal/app/services/webpage_analysis"
 	"mgds/internal/app/use-cases/analyze_webpage"
 	"mgds/internal/app/use-cases/get_document"
 	"mgds/internal/app/use-cases/graph/explore_graph"
@@ -24,7 +22,6 @@ import (
 	"mgds/internal/pkg/configuration"
 	"mgds/internal/pkg/database"
 	"mgds/internal/pkg/graph"
-	"mgds/internal/pkg/keyword"
 	"mgds/internal/pkg/node"
 	"mgds/internal/pkg/scrapper"
 )
@@ -102,23 +99,14 @@ func main() {
 	log.Printf("Initializing analyze webpage use case...")
 	if graphDB != nil && db != nil {
 		webScraper := scrapper.NewWebScraper()
+		linkService := link.NewDirectLinkService(graphDB)
 
-		keywordExtractor, err4 := keyword.NewExtractor()
-		if err4 != nil {
-			log.Printf("Warning: Failed to initialize keyword extractor: %v", err4)
-			log.Printf("Analyze webpage tools will return errors")
-		} else {
-			textAnalyzer := text_analysis.NewTextAnalysisService(keywordExtractor)
-			webpageAnalyzer := webpage_analysis.NewWebpageAnalysisService(webScraper, textAnalyzer)
-			linkService := link.NewDirectLinkService(graphDB)
-
-			analyzeWebpageUseCase = analyze_webpage.NewAnalyzeWebpageUseCase(
-				webpageAnalyzer,
-				linkService,
-				db,
-			)
-			log.Printf("Analyze webpage use case initialized successfully")
-		}
+		analyzeWebpageUseCase = analyze_webpage.NewAnalyzeWebpageUseCase(
+			webScraper,
+			linkService,
+			db,
+		)
+		log.Printf("Analyze webpage use case initialized successfully")
 	} else {
 		log.Printf("Warning: Dependencies not available for analyze webpage use case")
 		log.Printf("Analyze webpage tools will return errors")

@@ -1,7 +1,6 @@
 package webpage
 
 import (
-	"mgds/internal/app/services/text_analysis"
 	"mgds/internal/pkg/node"
 	"mgds/internal/pkg/scrapper"
 )
@@ -14,7 +13,6 @@ type WebpageInterface interface {
 	GetURL() string
 	GetTitle() string
 	GetText() string
-	GetTextAnalysis() *text_analysis.TextAnalysisResult
 	GetScrapedData() *scrapper.ScrapedData
 	HasKeywords() bool
 }

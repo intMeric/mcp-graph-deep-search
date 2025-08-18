@@ -9,13 +9,12 @@ type AnalyzeWebpageRequest struct {
 }
 
 type AnalyzeWebpageResponse struct {
-	URL               string          `json:"url"`
-	DocumentID        string          `json:"document_id"`
-	Title             string          `json:"title"`
-	Text              string          `json:"text"`
-	ExtractedKeywords []string        `json:"extracted_keywords"`
-	RelationsCreated  int             `json:"relations_created"`
-	RelationErrors    []RelationError `json:"relation_errors,omitempty"`
+	URL              string          `json:"url"`
+	DocumentID       string          `json:"document_id"`
+	Title            string          `json:"title"`
+	Text             string          `json:"text"`
+	RelationsCreated int             `json:"relations_created"`
+	RelationErrors   []RelationError `json:"relation_errors,omitempty"`
 }
 
 type RelationError struct {

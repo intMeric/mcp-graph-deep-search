@@ -164,12 +164,6 @@ This is a Go-based MCP server providing deep search capabilities through an LLM-
 
 - **Note**: Queue system is documented but not currently implemented in the codebase
 
-**Keyword Extraction (`internal/pkg/keyword/`)**
-
-- Simple interface for extracting keywords from text
-- Prose library integration for natural language processing
-- Configurable options: minimum word length, maximum keywords, stop word filtering
-- Two extraction methods: simple string list or keywords with frequency scores
 
 **Graph Database (`internal/pkg/graph/`)**
 
@@ -205,7 +199,7 @@ This is a Go-based MCP server providing deep search capabilities through an LLM-
 ### Key Design Patterns
 
 - **Interface-driven design**: All major components define interfaces first
-- **Factory pattern**: Used for component instantiation (web scrapers, databases, keyword extractors)
+- **Factory pattern**: Used for component instantiation (web scrapers, databases)
 - **Context propagation**: All operations support context for cancellation/timeouts
 
 ### Dependencies
@@ -214,7 +208,6 @@ Key external dependencies:
 
 - `github.com/metoro-io/mcp-golang`: MCP (Model Context Protocol) server implementation
 - `github.com/gocolly/colly/v2`: Web scraping framework
-- `github.com/jdkato/prose/v2`: Natural language processing for keyword extraction
 - `github.com/onsi/ginkgo/v2` + `github.com/onsi/gomega`: BDD testing framework
 - `github.com/neo4j/neo4j-go-driver/v5`: Neo4j database driver for graph operations
 - `github.com/PuerkitoBio/goquery`: HTML document traversal and manipulation for serialization
@@ -252,22 +245,8 @@ Key external dependencies:
 - Returns detailed statistics on pruning operations (deleted nodes and relationships)
 - Integration with Neo4j for transactional deletion operations
 
-**Text Analysis Service (`internal/app/services/text_analysis/`)**
 
-- Service for keyword extraction and analysis from text content
-- Single interface for analyzing text content with structured results
-- Automatic HTML parsing and text extraction using serializer package
-- Methods to check for presence of keywords in results
-- JSON serialization support for results
-- Built on top of keyword extraction packages
-
-**Webpage Analysis Service (`internal/app/services/webpage_analysis/`)**
-
-- High-level service for complete webpage analysis workflow
-- Integrates web scraping, text analysis, and node generation
-- Generates structured webpage and link nodes for graph database
-- Consistent URL-based node ID generation using domain and path
-- Returns comprehensive analysis results including scraped data, text analysis, and nodes
+**Note**: The webpage analysis service has been removed to simplify the architecture. The `analyze_webpage` use case now directly uses the web scraper and webpage.Build() for maximum simplicity.
 
 ### Use Cases (MCP Tools)
 
@@ -290,7 +269,7 @@ Key external dependencies:
 
 - Comprehensive webpage analysis workflow combining scraping, content analysis, and graph storage
 - Request validation and response structuring with detailed error reporting
-- Integration of web scraping, keyword extraction, and graph relationship creation
+- Integration of web scraping and graph relationship creation
 - Handles relation creation errors gracefully with detailed error context
 - Returns document ID, extracted data, and relation statistics
 
@@ -319,8 +298,6 @@ Key external dependencies:
     - `graph_explorer/`: Graph database exploration and analysis
     - `link/`: Graph relationship creation with validation
     - `graph_pruner/`: Graph cleanup and maintenance service
-    - `text_analysis/`: Text analysis service for keyword extraction with HTML parsing
-    - `webpage_analysis/`: Complete webpage analysis service with node generation
   - `use-cases/`: MCP tool implementations
     - `explore_graph/`: Graph exploration tools (overview, nodes by type, relations, connected nodes)
     - `search_and_analyze/`: Web search and content analysis tool
@@ -329,7 +306,6 @@ Key external dependencies:
     - `prune_graph/`: Graph cleanup and maintenance tools
 - `internal/pkg/`: Reusable internal packages
   - `scrapper/`: Web scraping functionality with Colly integration
-  - `keyword/`: Keyword extraction from text using prose library
   - `node/`: Node type definitions for graph database entities
   - `graph/`: Graph database interfaces and Neo4j implementation with typed nodes
   - `serializer/`: HTML parsing and serialization with goquery integration

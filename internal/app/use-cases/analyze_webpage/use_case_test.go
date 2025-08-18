@@ -8,23 +8,20 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"mgds/internal/app/object/webpage"
 	"mgds/internal/app/services/link"
-	"mgds/internal/app/services/text_analysis"
 	"mgds/internal/app/use-cases/analyze_webpage"
-	"mgds/internal/pkg/keyword"
 	"mgds/internal/pkg/node"
 	"mgds/internal/pkg/scrapper"
 )
 
-type mockWebpageAnalysisService struct{}
+type mockWebScraper struct{}
 
-func (m *mockWebpageAnalysisService) AnalyzeWebpage(ctx context.Context, url string, options *scrapper.ScrapingOptions) (webpage.WebpageInterface, error) {
+func (m *mockWebScraper) Scrape(ctx context.Context, url string, options *scrapper.ScrapingOptions) (*scrapper.ScrapedData, error) {
 	if url == "invalid-url" {
 		return nil, fmt.Errorf("failed to parse URL")
 	}
 
-	scrapedData := &scrapper.ScrapedData{
+	return &scrapper.ScrapedData{
 		URL:       url,
 		Title:     "Test Page",
 		Text:      "This is test content about machine learning and artificial intelligence",
@@ -32,23 +29,18 @@ func (m *mockWebpageAnalysisService) AnalyzeWebpage(ctx context.Context, url str
 		Links:     []scrapper.Link{{URL: "https://example.com/other", Text: "Other Page"}},
 		Images:    []scrapper.Image{},
 		ScrapedAt: time.Now(),
-	}
-
-	textAnalysis := &text_analysis.TextAnalysisResult{
-		Text: "This is test content about machine learning and artificial intelligence",
-		Keywords: []keyword.Keyword{
-			{Text: "machine", Score: 0.9, Frequency: 1},
-			{Text: "learning", Score: 0.9, Frequency: 1},
-			{Text: "artificial", Score: 0.8, Frequency: 1},
-			{Text: "intelligence", Score: 0.8, Frequency: 1},
-		},
-	}
-
-	// Create webpage object with original URL
-	return webpage.Build(scrapedData, textAnalysis, url), nil
+	}, nil
 }
 
-func (m *mockWebpageAnalysisService) Close() error {
+func (m *mockWebScraper) ScrapeMultiple(ctx context.Context, urls []string, options *scrapper.ScrapingOptions) ([]*scrapper.ScrapedData, error) {
+	return nil, nil
+}
+
+func (m *mockWebScraper) SetUserAgent(userAgent string) {}
+
+func (m *mockWebScraper) SetTimeout(timeout time.Duration) {}
+
+func (m *mockWebScraper) Close() error {
 	return nil
 }
 
@@ -107,21 +99,21 @@ func (m *mockDatabase) Close(ctx context.Context) error {
 
 var _ = Describe("AnalyzeWebpageUseCase", func() {
 	var (
-		useCase             analyze_webpage.AnalyzeWebpageUseCase
-		mockWebpageAnalysis *mockWebpageAnalysisService
-		mockLinkSvc         *mockLinkService
-		mockDB              *mockDatabase
-		ctx                 context.Context
+		useCase     analyze_webpage.AnalyzeWebpageUseCase
+		mockScraper *mockWebScraper
+		mockLinkSvc *mockLinkService
+		mockDB      *mockDatabase
+		ctx         context.Context
 	)
 
 	BeforeEach(func() {
 		ctx = context.Background()
-		mockWebpageAnalysis = &mockWebpageAnalysisService{}
+		mockScraper = &mockWebScraper{}
 		mockLinkSvc = &mockLinkService{}
 		mockDB = &mockDatabase{}
 
 		useCase = analyze_webpage.NewAnalyzeWebpageUseCase(
-			mockWebpageAnalysis,
+			mockScraper,
 			mockLinkSvc,
 			mockDB,
 		)
@@ -142,7 +134,6 @@ var _ = Describe("AnalyzeWebpageUseCase", func() {
 				Expect(response.DocumentID).To(Equal("example.com/test"))
 				Expect(response.Title).To(Equal("Test Page"))
 				Expect(response.Text).To(Equal("This is test content about machine learning and artificial intelligence"))
-				Expect(response.ExtractedKeywords).To(ContainElement("machine"))
 				Expect(response.RelationsCreated).To(BeNumerically(">", 0))
 			})
 
@@ -193,7 +184,7 @@ var _ = Describe("AnalyzeWebpageUseCase", func() {
 				_, err := useCase.Execute(ctx, request)
 
 				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(ContainSubstring("failed to analyze webpage"))
+				Expect(err.Error()).To(ContainSubstring("failed to scrape webpage"))
 			})
 		})
 	})

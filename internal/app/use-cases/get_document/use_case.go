@@ -108,10 +108,9 @@ func (uc *getDocumentUseCase) Execute(ctx context.Context, req *GetDocumentReque
 		response.Action = "analyzed_but_retrieval_failed"
 		response.Message = "Webpage analyzed successfully but document retrieval failed"
 		response.AnalysisResult = &AnalysisResult{
-			DocumentID:        analyzeResp.DocumentID,
-			ExtractedKeywords: analyzeResp.ExtractedKeywords,
-			CreatedRelations:  analyzeResp.RelationsCreated,
-			Errors:            extractErrorMessages(analyzeResp.RelationErrors),
+			DocumentID:       analyzeResp.DocumentID,
+			CreatedRelations: analyzeResp.RelationsCreated,
+			Errors:           extractErrorMessages(analyzeResp.RelationErrors),
 		}
 		return response, nil
 	}
@@ -122,10 +121,9 @@ func (uc *getDocumentUseCase) Execute(ctx context.Context, req *GetDocumentReque
 	response.Action = "auto_analysis_successful"
 	response.Message = "Webpage analyzed and document retrieved successfully"
 	response.AnalysisResult = &AnalysisResult{
-		DocumentID:        analyzeResp.DocumentID,
-		ExtractedKeywords: analyzeResp.ExtractedKeywords,
-		CreatedRelations:  analyzeResp.RelationsCreated,
-		Errors:            extractErrorMessages(analyzeResp.RelationErrors),
+		DocumentID:       analyzeResp.DocumentID,
+		CreatedRelations: analyzeResp.RelationsCreated,
+		Errors:           extractErrorMessages(analyzeResp.RelationErrors),
 	}
 
 	// Update the node in response with new location

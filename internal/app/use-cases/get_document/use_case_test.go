@@ -82,11 +82,12 @@ var _ = Describe("SmartDocumentRetrievalUseCase", func() {
 
 		mockAnalyzeWeb = &mockAnalyzeWebpageUseCase{
 			response: &analyze_webpage.AnalyzeWebpageResponse{
-				URL:               "https://example.com/test",
-				DocumentID:        "new-doc-id",
-				ExtractedKeywords: []string{"test", "keyword"},
-				RelationsCreated:  2,
-				RelationErrors:    []analyze_webpage.RelationError{},
+				URL:              "https://example.com/test",
+				DocumentID:       "new-doc-id",
+				Title:            "Test Page",
+				Text:             "Test content",
+				RelationsCreated: 2,
+				RelationErrors:   []analyze_webpage.RelationError{},
 			},
 		}
 
@@ -238,7 +239,7 @@ var _ = Describe("SmartDocumentRetrievalUseCase", func() {
 				Expect(response.Document).To(Equal(mockDB.document))
 				Expect(response.AnalysisResult).NotTo(BeNil())
 				Expect(response.AnalysisResult.DocumentID).To(Equal("new-doc-id"))
-				Expect(response.AnalysisResult.ExtractedKeywords).To(ContainElement("test"))
+				Expect(response.AnalysisResult.CreatedRelations).To(Equal(2))
 			})
 
 			It("should handle analysis failure", func() {

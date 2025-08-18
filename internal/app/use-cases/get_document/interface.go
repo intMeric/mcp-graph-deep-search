@@ -25,8 +25,7 @@ type GetDocumentResponse struct {
 }
 
 type AnalysisResult struct {
-	DocumentID        string   `json:"documentId"`
-	ExtractedKeywords []string `json:"extractedKeywords"`
-	CreatedRelations  int      `json:"createdRelations"`
-	Errors            []string `json:"errors,omitempty"`
+	DocumentID       string   `json:"documentId"`
+	CreatedRelations int      `json:"createdRelations"`
+	Errors           []string `json:"errors,omitempty"`
 }

@@ -5,28 +5,25 @@ import (
 	"fmt"
 	"net/url"
 
-	"mgds/internal/app/services/text_analysis"
 	"mgds/internal/pkg/node"
 	"mgds/internal/pkg/scrapper"
 )
 
 type Webpage struct {
-	URL          string                            `json:"url"`
-	ScrapedData  *scrapper.ScrapedData             `json:"scraped_data"`
-	TextAnalysis *text_analysis.TextAnalysisResult `json:"text_analysis"`
-	Links        []*PageLink                       `json:"links"`
+	URL         string                `json:"url"`
+	ScrapedData *scrapper.ScrapedData `json:"scraped_data"`
+	Links       []*PageLink           `json:"links"`
 }
 
 type PageLink struct {
 	*scrapper.Link
 }
 
-func NewWebpage(scrapedData *scrapper.ScrapedData, textAnalysis *text_analysis.TextAnalysisResult) *Webpage {
+func NewWebpage(scrapedData *scrapper.ScrapedData) *Webpage {
 	webpage := &Webpage{
-		URL:          scrapedData.URL,
-		ScrapedData:  scrapedData,
-		TextAnalysis: textAnalysis,
-		Links:        make([]*PageLink, len(scrapedData.Links)),
+		URL:         scrapedData.URL,
+		ScrapedData: scrapedData,
+		Links:       make([]*PageLink, len(scrapedData.Links)),
 	}
 
 	for i, link := range scrapedData.Links {
@@ -36,7 +33,7 @@ func NewWebpage(scrapedData *scrapper.ScrapedData, textAnalysis *text_analysis.T
 	return webpage
 }
 
-func Build(scrapedData *scrapper.ScrapedData, textAnalysis *text_analysis.TextAnalysisResult, originalURL string) WebpageInterface {
+func Build(scrapedData *scrapper.ScrapedData, originalURL string) WebpageInterface {
 	// Use original URL if provided, otherwise use scraped URL
 	url := originalURL
 	if url == "" {
@@ -44,10 +41,9 @@ func Build(scrapedData *scrapper.ScrapedData, textAnalysis *text_analysis.TextAn
 	}
 
 	webpage := &Webpage{
-		URL:          url,
-		ScrapedData:  scrapedData,
-		TextAnalysis: textAnalysis,
-		Links:        make([]*PageLink, len(scrapedData.Links)),
+		URL:         url,
+		ScrapedData: scrapedData,
+		Links:       make([]*PageLink, len(scrapedData.Links)),
 	}
 
 	for i, link := range scrapedData.Links {
@@ -97,16 +93,13 @@ func (w *Webpage) GetText() string {
 	return w.ScrapedData.Text
 }
 
-func (w *Webpage) GetTextAnalysis() *text_analysis.TextAnalysisResult {
-	return w.TextAnalysis
-}
 
 func (w *Webpage) GetScrapedData() *scrapper.ScrapedData {
 	return w.ScrapedData
 }
 
 func (w *Webpage) HasKeywords() bool {
-	return w.TextAnalysis != nil && w.TextAnalysis.HasKeywords()
+	return false // No keyword analysis anymore
 }
 
 func (w *Webpage) ToDocument() map[string]any {
@@ -115,7 +108,6 @@ func (w *Webpage) ToDocument() map[string]any {
 		"title":      w.ScrapedData.Title,
 		"text":       w.ScrapedData.Text,
 		"meta_tags":  w.ScrapedData.MetaTags,
-		"keywords":   w.TextAnalysis.Keywords,
 		"links":      w.ScrapedData.Links,
 		"scraped_at": w.ScrapedData.ScrapedAt,
 	}

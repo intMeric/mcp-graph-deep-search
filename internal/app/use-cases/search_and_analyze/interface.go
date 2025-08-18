@@ -22,10 +22,9 @@ type SearchAndAnalyzeResponse struct {
 }
 
 type AnalysisResult struct {
-	URL               string   `json:"url"`
-	DocumentID        string   `json:"document_id"`
-	ExtractedKeywords []string `json:"extracted_keywords"`
-	RelationsCreated  int      `json:"relations_created"`
+	URL              string `json:"url"`
+	DocumentID       string `json:"document_id"`
+	RelationsCreated int    `json:"relations_created"`
 }
 
 type AnalysisError struct {
