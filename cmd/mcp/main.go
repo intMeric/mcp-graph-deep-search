@@ -20,7 +20,7 @@ import (
 	"mgds/internal/app/use-cases/explore_graph"
 	"mgds/internal/app/use-cases/prune_graph"
 	"mgds/internal/app/use-cases/search_and_analyze"
-	"mgds/internal/app/use-cases/smart_document_retrieval"
+	"mgds/internal/app/use-cases/get_document"
 	"mgds/internal/pkg/configuration"
 	"mgds/internal/pkg/database"
 	"mgds/internal/pkg/graph"
@@ -35,7 +35,7 @@ var exploreGraphUseCase explore_graph.ExploreGraphUseCase
 var searchAndAnalyzeUseCase search_and_analyze.SearchAndAnalyzeUseCase
 var analyzeWebpageUseCase analyze_webpage.AnalyzeWebpageUseCase
 var pruneGraphUseCase prune_graph.PruneGraphUseCase
-var smartDocumentRetrievalUseCase smart_document_retrieval.SmartDocumentRetrievalUseCase
+var getDocumentUseCase get_document.GetDocumentUseCase
 
 func main() {
 	// Add debug logging to stderr so it doesn't interfere with stdio transport
@@ -142,17 +142,17 @@ func main() {
 		log.Printf("Prune graph tools will return errors")
 	}
 
-	// Initialize smart document retrieval use case
-	log.Printf("Initializing smart document retrieval use case...")
+	// Initialize get document use case
+	log.Printf("Initializing get document use case...")
 	if db != nil && analyzeWebpageUseCase != nil {
-		smartDocumentRetrievalUseCase = smart_document_retrieval.NewSmartDocumentRetrievalUseCase(
+		getDocumentUseCase = get_document.NewGetDocumentUseCase(
 			db,
 			analyzeWebpageUseCase,
 		)
-		log.Printf("Smart document retrieval use case initialized successfully")
+		log.Printf("Get document use case initialized successfully")
 	} else {
-		log.Printf("Warning: Dependencies not available for smart document retrieval use case")
-		log.Printf("Smart document retrieval tools will return errors")
+		log.Printf("Warning: Dependencies not available for get document use case")
+		log.Printf("Get document tools will return errors")
 	}
 
 	// Create channel to keep server alive (based on official example)
@@ -181,8 +181,8 @@ func main() {
 		log.Fatalf("Failed to register prune graph tools: %v", err)
 	}
 
-	if err := registerSmartDocumentRetrievalTools(server); err != nil {
-		log.Fatalf("Failed to register smart document retrieval tools: %v", err)
+	if err := registerGetDocumentTools(server); err != nil {
+		log.Fatalf("Failed to register get document tools: %v", err)
 	}
 
 	log.Printf("MCP server ready, starting to serve...")
@@ -252,8 +252,8 @@ type PreviewDeletionArgs struct {
 	MaxDepth int    `json:"maxDepth" jsonschema:"description=Maximum depth for cascade preview (default: 5),minimum=1,maximum=20"`
 }
 
-// Smart document retrieval tool arguments
-type SmartDocumentRetrievalArgs struct {
+// Get document tool arguments
+type GetDocumentArgs struct {
 	Node        *node.Node `json:"node" jsonschema:"required,description=Node with ID to retrieve or analyze document for"`
 	AutoAnalyze bool       `json:"autoAnalyze" jsonschema:"description=Automatically analyze webpage if no document exists (default: true)"`
 }
@@ -623,12 +623,12 @@ func registerPruneGraphTools(server *mcp_golang.Server) error {
 	return nil
 }
 
-func registerSmartDocumentRetrievalTools(server *mcp_golang.Server) error {
+func registerGetDocumentTools(server *mcp_golang.Server) error {
 	// Tool: Get Document
 	err := server.RegisterTool("get_document", "Intelligently retrieve existing document or automatically analyze webpage if no document exists. Perfect for LLMs needing document content with automatic fallback to analysis.",
-		func(args SmartDocumentRetrievalArgs) (*mcp_golang.ToolResponse, error) {
-			if smartDocumentRetrievalUseCase == nil {
-				return nil, fmt.Errorf("smart document retrieval use case not available")
+		func(args GetDocumentArgs) (*mcp_golang.ToolResponse, error) {
+			if getDocumentUseCase == nil {
+				return nil, fmt.Errorf("get document use case not available")
 			}
 
 			ctx := context.Background()
@@ -644,14 +644,14 @@ func registerSmartDocumentRetrievalTools(server *mcp_golang.Server) error {
 				autoAnalyze = true
 			}
 
-			req := &smart_document_retrieval.SmartDocumentRetrievalRequest{
+			req := &get_document.GetDocumentRequest{
 				Node:        args.Node,
 				AutoAnalyze: autoAnalyze,
 			}
 
-			response, err := smartDocumentRetrievalUseCase.Execute(ctx, req)
+			response, err := getDocumentUseCase.Execute(ctx, req)
 			if err != nil {
-				return nil, fmt.Errorf("failed to execute smart document retrieval: %w", err)
+				return nil, fmt.Errorf("failed to execute get document: %w", err)
 			}
 
 			content, err := json.MarshalIndent(response, "", "  ")

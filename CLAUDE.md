@@ -237,6 +237,14 @@ Key external dependencies:
 - Request validation ensuring source and target nodes are different and valid
 - Integration with graph database for relationship management
 
+**Graph Pruner Service (`internal/app/services/graph_pruner/`)**
+
+- Service for systematic cleanup and maintenance of graph database
+- Provides node and relationship deletion capabilities with cascade operations
+- Supports bulk deletion operations for efficient graph pruning
+- Returns detailed statistics on pruning operations (deleted nodes and relationships)
+- Integration with Neo4j for transactional deletion operations
+
 **Text Analysis Service (`internal/app/services/text_analysis/`)**
 
 - Composite service combining PII extraction and keyword extraction
@@ -280,7 +288,7 @@ Key external dependencies:
 - Handles relation creation errors gracefully with detailed error context
 - Returns document ID, extracted data, and relation statistics
 
-**Smart Document Retrieval Use Case (`internal/app/use-cases/smart_document_retrieval/`)**
+**Get Document Use Case (`internal/app/use-cases/get_document/`)**
 
 - Intelligent document retrieval with automatic analysis fallback for better LLM guidance
 - Provides get_document MCP tool that tries document retrieval first, then auto-analyzes if needed
@@ -288,6 +296,13 @@ Key external dependencies:
 - Returns comprehensive status information (found, analyzed_and_retrieved, no_document, error)
 - Improves LLM experience by providing a single, intelligent tool for document access
 - Configurable auto-analysis behavior with detailed action and status reporting
+
+**Prune Graph Use Case (`internal/app/use-cases/prune_graph/`)**
+
+- Provides prune_graph MCP tool for cleaning up knowledge graph by removing nodes and relationships
+- Uses graph pruner service to systematically delete nodes and their associated relationships
+- Supports bulk operations for efficient graph maintenance and cleanup
+- Returns statistics on deleted nodes and relationships for transparency
 
 ### Directory Structure
 
@@ -297,13 +312,15 @@ Key external dependencies:
   - `services/`: High-level business services
     - `graph_explorer/`: Graph database exploration and analysis
     - `link/`: Graph relationship creation with validation
+    - `graph_pruner/`: Graph cleanup and maintenance service
     - `text_analysis/`: Composite text analysis combining PII and keywords with HTML parsing
     - `webpage_analysis/`: Complete webpage analysis service with node generation
   - `use-cases/`: MCP tool implementations
     - `explore_graph/`: Graph exploration tools (overview, nodes by type, relations, connected nodes)
     - `search_and_analyze/`: Web search and content analysis tool
     - `analyze_webpage/`: Webpage analysis workflow
-    - `smart_document_retrieval/`: Intelligent document retrieval with automatic analysis fallback
+    - `get_document/`: Intelligent document retrieval with automatic analysis fallback
+    - `prune_graph/`: Graph cleanup and maintenance tools
 - `internal/pkg/`: Reusable internal packages
   - `scrapper/`: Web scraping functionality with Colly integration
   - `cache/`: Generic caching interfaces and implementations  
@@ -317,5 +334,8 @@ Key external dependencies:
   - `database/`: Generic database abstraction with MongoDB implementation
   - `search_engine/`: Web search functionality with SearXNG integration
   - `configuration/`: Configuration objects for external services (MongoDB, Neo4j, SearXNG)
+  - `constant/`: Application constants and definitions
 - `searxng/`: SearXNG search engine configuration and data
+- `build/`: Build artifacts and infrastructure configuration
+- `docker/`: Docker-related files and configurations
 - `docker-compose.yml`: Infrastructure services (Neo4j, MongoDB, Redis, SearXNG)
