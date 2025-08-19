@@ -434,7 +434,7 @@ func registerSearchAndAnalyzeTools(server *mcp_golang.Server) error {
 
 func registerAnalyzeWebpageTools(server *mcp_golang.Server) error {
 	// Tool: Analyze Webpage
-	err := server.RegisterTool("analyze_webpage", "Analyze a specific webpage for content, PII, keywords, and build knowledge graph relationships",
+	err := server.RegisterTool("analyze_webpage", "ADVANCED: Force analysis of webpage (WILL FAIL if URL already exists with E11000 duplicate key error). Use get_document instead for normal webpage access - it handles existing documents automatically and only analyzes when needed.",
 		func(args AnalyzeWebpageArgs) (*mcp_golang.ToolResponse, error) {
 			if analyzeWebpageUseCase == nil {
 				return nil, fmt.Errorf("analyze webpage use case not available")
@@ -602,7 +602,7 @@ func registerPruneGraphTools(server *mcp_golang.Server) error {
 
 func registerGetDocumentTools(server *mcp_golang.Server) error {
 	// Tool: Get Document
-	err := server.RegisterTool("get_document", "Intelligently retrieve existing document or automatically analyze webpage if no document exists. Perfect for LLMs needing document content with automatic fallback to analysis.",
+	err := server.RegisterTool("get_document", "PRIMARY TOOL for accessing webpage content. Automatically retrieves existing analyzed documents or analyzes new webpages on-demand. Always use this instead of analyze_webpage to avoid duplicate key errors. Handles both document retrieval and automatic URL analysis intelligently.",
 		func(args GetDocumentArgs) (*mcp_golang.ToolResponse, error) {
 			if getDocumentUseCase == nil {
 				return nil, fmt.Errorf("get document use case not available")
