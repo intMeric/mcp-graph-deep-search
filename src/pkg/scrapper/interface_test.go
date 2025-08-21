@@ -2,19 +2,18 @@ package scrapper_test
 
 import (
 	"context"
+	"mgds/src/pkg/scrapper"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
-	"mgds/pkg/scrapper"
 )
 
 // MockScrapper implements the scrapper.Interface for testing
 type MockScrapper struct {
-	config       *scrapper.Config
-	shouldFail   bool
-	mockResults  map[string]*scrapper.ScrapResult
+	config      *scrapper.Config
+	shouldFail  bool
+	mockResults map[string]*scrapper.ScrapResult
 }
 
 func NewMockScrapper() *MockScrapper {
@@ -34,11 +33,11 @@ func (m *MockScrapper) Scrape(ctx context.Context, url string) (*scrapper.ScrapR
 	if m.shouldFail {
 		return nil, &ScrapError{Message: "mock scraping failed"}
 	}
-	
+
 	if result, exists := m.mockResults[url]; exists {
 		return result, nil
 	}
-	
+
 	return &scrapper.ScrapResult{
 		URL:        url,
 		Title:      "Mock Title",
@@ -114,7 +113,7 @@ var _ = Describe("Scrapper Interface", func() {
 		Context("with valid URL", func() {
 			It("should return scraping result", func() {
 				url := "https://example.com"
-				
+
 				result, err := mockScrapper.Scrape(ctx, url)
 
 				Expect(err).NotTo(HaveOccurred())
@@ -128,7 +127,7 @@ var _ = Describe("Scrapper Interface", func() {
 
 			It("should extract links from the page", func() {
 				url := "https://example.com"
-				
+
 				result, err := mockScrapper.Scrape(ctx, url)
 
 				Expect(err).NotTo(HaveOccurred())
@@ -139,7 +138,7 @@ var _ = Describe("Scrapper Interface", func() {
 
 			It("should include metadata", func() {
 				url := "https://example.com"
-				
+
 				result, err := mockScrapper.Scrape(ctx, url)
 
 				Expect(err).NotTo(HaveOccurred())
@@ -155,7 +154,7 @@ var _ = Describe("Scrapper Interface", func() {
 
 			It("should handle errors gracefully", func() {
 				url := "https://example.com"
-				
+
 				result, err := mockScrapper.Scrape(ctx, url)
 
 				Expect(err).To(HaveOccurred())
@@ -167,9 +166,9 @@ var _ = Describe("Scrapper Interface", func() {
 			It("should respect context timeout", func() {
 				ctxWithTimeout, cancel := context.WithTimeout(ctx, 1*time.Millisecond)
 				defer cancel()
-				
+
 				time.Sleep(2 * time.Millisecond) // Ensure context is cancelled
-				
+
 				_, err := mockScrapper.Scrape(ctxWithTimeout, "https://example.com")
 
 				// In a real implementation, this should return context error
@@ -187,7 +186,7 @@ var _ = Describe("Scrapper Interface", func() {
 					"https://example.com/page2",
 					"https://example.com/page3",
 				}
-				
+
 				results, err := mockScrapper.ScrapeBatch(ctx, urls)
 
 				Expect(err).NotTo(HaveOccurred())
@@ -203,7 +202,7 @@ var _ = Describe("Scrapper Interface", func() {
 		Context("with empty URL list", func() {
 			It("should return empty results", func() {
 				urls := []string{}
-				
+
 				results, err := mockScrapper.ScrapeBatch(ctx, urls)
 
 				Expect(err).NotTo(HaveOccurred())
@@ -246,7 +245,7 @@ var _ = Describe("Scrapper Interface", func() {
 		Context("with valid URLs", func() {
 			It("should return normalized URL", func() {
 				url := "https://example.com/page"
-				
+
 				normalized, err := mockScrapper.NormalizeURL(url)
 
 				Expect(err).NotTo(HaveOccurred())
@@ -257,7 +256,7 @@ var _ = Describe("Scrapper Interface", func() {
 		Context("with invalid URLs", func() {
 			It("should return error for invalid URLs", func() {
 				url := "invalid-url"
-				
+
 				normalized, err := mockScrapper.NormalizeURL(url)
 
 				Expect(err).To(HaveOccurred())
@@ -275,7 +274,7 @@ var _ = Describe("Scrapper Interface", func() {
 				FollowRedirects: false,
 				MaxRedirects:    3,
 			}
-			
+
 			mockScrapper.SetConfig(newConfig)
 			retrievedConfig := mockScrapper.GetConfig()
 
@@ -291,7 +290,7 @@ var _ = Describe("Scrapper Interface", func() {
 	Describe("Lifecycle", func() {
 		It("should close without error", func() {
 			err := mockScrapper.Close()
-			
+
 			Expect(err).NotTo(HaveOccurred())
 		})
 	})

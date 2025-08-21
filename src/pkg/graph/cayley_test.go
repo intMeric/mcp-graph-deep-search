@@ -2,12 +2,11 @@ package graph_test
 
 import (
 	"context"
+	"mgds/src/pkg/graph"
+	"mgds/src/pkg/object"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
-	"mgds/pkg/graph"
-	"mgds/pkg/object"
 )
 
 var _ = Describe("CayleyGraph", func() {
@@ -23,7 +22,7 @@ var _ = Describe("CayleyGraph", func() {
 		}
 		g = graph.NewCayleyGraph(config)
 		ctx = context.Background()
-		
+
 		err := g.Connect(ctx)
 		Expect(err).NotTo(HaveOccurred())
 	})
@@ -90,7 +89,7 @@ var _ = Describe("CayleyGraph", func() {
 
 			It("should update an existing node", func() {
 				testNode.SetProperty("updated", true)
-				
+
 				err := g.UpdateNode(ctx, testNode)
 				Expect(err).NotTo(HaveOccurred())
 
@@ -219,7 +218,7 @@ var _ = Describe("CayleyGraph", func() {
 			// Create connections: node1 -> node2 -> node3
 			rel1 := &graph.Relation{FromNodeId: node1.GetMgdsId(), ToNodeId: node2.GetMgdsId(), Label: "connects"}
 			rel2 := &graph.Relation{FromNodeId: node2.GetMgdsId(), ToNodeId: node3.GetMgdsId(), Label: "connects"}
-			
+
 			err = g.AddRelation(ctx, rel1)
 			Expect(err).NotTo(HaveOccurred())
 			err = g.AddRelation(ctx, rel2)
@@ -231,7 +230,7 @@ var _ = Describe("CayleyGraph", func() {
 				connected, err := g.GetConnectedNodes(ctx, node2.GetMgdsId())
 				Expect(err).NotTo(HaveOccurred())
 				Expect(connected).To(HaveLen(2))
-				
+
 				ids := make([]string, len(connected))
 				for i, n := range connected {
 					ids[i] = n.GetMgdsId()
@@ -256,7 +255,7 @@ var _ = Describe("CayleyGraph", func() {
 		BeforeEach(func() {
 			node1 := object.NewURLNode("url-1", "Page 1", "First page", "https://example1.com")
 			node2 := object.NewURLNode("url-2", "Page 2", "Second page", "https://example2.com")
-			
+
 			err := g.AddNode(ctx, node1)
 			Expect(err).NotTo(HaveOccurred())
 			err = g.AddNode(ctx, node2)
@@ -268,7 +267,7 @@ var _ = Describe("CayleyGraph", func() {
 				nodes, err := g.FindNodesByType(ctx, object.URLNodeType)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(nodes).To(HaveLen(2))
-				
+
 				for _, node := range nodes {
 					Expect(node.GetType()).To(Equal(object.URLNodeType))
 				}

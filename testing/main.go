@@ -3,14 +3,126 @@ package main
 import (
 	"context"
 	"fmt"
-
-	"mgds/pkg/scrapper"
+	"mgds/src/pkg/search_engine"
+	"time"
 )
 
 func main() {
-	s := scrapper.NewCollyScrapper(nil)
-	e, _ := s.Scrape(context.Background(), "https://www.lemediatv.fr/emissions/2025/kneecap-ce-groupe-de-rap-irlandais-qui-fait-trembler-retailleau-caroline-yadan-et-les-pro-israel-HRAgmjJPQM-7th1Q1fFCfA")
-	fmt.Println("Scraping result:", e)
+	fmt.Println("🔍 Testing Search Engine with SearchXNG...")
+
+	// Configure client for your local SearchXNG instance
+	config := &search_engine.Config{
+		BaseURL:           "http://localhost:8888",
+		Timeout:           30 * time.Second,
+		UserAgent:         "mgds-test/1.0",
+		DefaultLanguage:   "en",
+		DefaultSafeSearch: 1,
+		MaxResults:        20,
+		DefaultTimeRange:  search_engine.TimeRangeShort,
+	}
+
+	// Create SearchXNG client
+	client := search_engine.NewSearXNG(config)
+	defer client.Close()
+
+	ctx := context.Background()
+
+	// Test 1: Health check
+	fmt.Println("\n💊 Testing SearchXNG health...")
+	if err := client.IsHealthy(ctx); err != nil {
+		fmt.Printf("❌ SearchXNG health check failed: %v\n", err)
+		fmt.Println("Make sure your SearchXNG instance is running on http://localhost:8888")
+		return
+	}
+	fmt.Println("✅ SearchXNG is healthy!")
+
+	// Test 2: Search for "Mersen" with short time range (general + news)
+	fmt.Println("\n🔍 Searching for 'Mersen' (short time, general + news)...")
+
+	req := &search_engine.SearchRequest{
+		Query:      "Mersen",
+		Categories: []search_engine.Category{search_engine.CategoryGeneral, search_engine.CategoryNews},
+		TimeRange:  search_engine.TimeRangeShort,
+		Language:   "en",
+		SafeSearch: 1,
+		PageNo:     1,
+		MaxResults: 10,
+	}
+
+	startTime := time.Now()
+	resp, err := client.Search(ctx, req)
+	if err != nil {
+		fmt.Printf("❌ Search failed: %v\n", err)
+		return
+	}
+
+	searchDuration := time.Since(startTime)
+
+	// Display results
+	fmt.Printf("✅ Search completed in %v (API reported: %v)\n", searchDuration, resp.TimeElapsed)
+	fmt.Printf("📊 Found %d results for query: '%s'\n", len(resp.Results), resp.Query)
+	fmt.Printf("📄 Page %d/%d (Next: %v, Prev: %v)\n",
+		resp.CurrentPage,
+		resp.CurrentPage,
+		resp.HasNextPage,
+		resp.HasPrevPage)
+
+	if len(resp.Results) == 0 {
+		fmt.Println("🤷 No results found. This might be because:")
+		fmt.Println("  - Your SearchXNG instance doesn't have search engines configured")
+		fmt.Println("  - The time range 'short' is too restrictive")
+		fmt.Println("  - Network connectivity issues")
+		return
+	}
+
+	fmt.Println("\n📋 Results:")
+	for i, result := range resp.Results {
+		fmt.Printf("\n%d. %s\n", i+1, result.Title)
+		fmt.Printf("   🌐 URL: %s\n", result.URL)
+		fmt.Printf("   📂 Category: %s\n", result.Category)
+		fmt.Printf("   🔧 Engine: %s\n", result.Engine)
+		fmt.Printf("   ⭐ Score: %.2f\n", result.Score)
+
+		if result.PublishedDate != nil {
+			fmt.Printf("   📅 Published: %s\n", result.PublishedDate.Format("2006-01-02 15:04:05"))
+		}
+
+		if len(result.Content) > 0 {
+			content := result.Content
+			if len(content) > 200 {
+				content = content[:200] + "..."
+			}
+			fmt.Printf("   📝 Content: %s\n", content)
+		}
+
+		if result.Metadata != nil {
+			if engines, ok := result.Metadata["engines"].([]string); ok && len(engines) > 1 {
+				fmt.Printf("   🔍 Also found in: %v\n", engines[1:])
+			}
+		}
+	}
+
+	// Test 3: Simple search test
+	fmt.Println("\n\n🚀 Testing simple search...")
+	simpleResp, err := client.SearchSimple(ctx, "Mersen stock")
+	if err != nil {
+		fmt.Printf("❌ Simple search failed: %v\n", err)
+		return
+	}
+
+	fmt.Printf("✅ Simple search found %d results for 'Mersen stock'\n", len(simpleResp.Results))
+	if len(simpleResp.Results) > 0 {
+		fmt.Printf("📰 First result: %s\n", simpleResp.Results[0].Title)
+		fmt.Printf("🌐 URL: %s\n", simpleResp.Results[0].URL)
+	}
+
+	fmt.Println("\n✅ Manual test completed successfully!")
+	fmt.Println("🔧 SearchXNG configuration:")
+	fmt.Printf("   • Instance: %s\n", config.BaseURL)
+	fmt.Printf("   • Timeout: %v\n", config.Timeout)
+	fmt.Printf("   • User Agent: %s\n", config.UserAgent)
+	fmt.Printf("   • Default Language: %s\n", config.DefaultLanguage)
+	fmt.Printf("   • Max Results: %d\n", config.MaxResults)
 }
 
 // func main1() {

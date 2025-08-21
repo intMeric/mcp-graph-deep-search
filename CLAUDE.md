@@ -25,7 +25,8 @@ You're not just a technician, you're a real software engineer. You can challenge
 - Run tests with coverage: `go test -v -cover ./...`
 - Run tests for specific test: `go test -v ./pkg/object -run TestURLNode`
 - Tests use Ginkgo BDD framework with Gomega assertions
-- Run manual testing: `go run testing/main.go`
+- Run manual testing: `go run testing/main.go` (tests SearchXNG integration)
+- Start SearchXNG instance: See searXNG/ directory for configuration (expects localhost:8888)
 
 ### Test Example Structure
 
@@ -84,9 +85,11 @@ var _ = Describe("MyComponent", func() {
 ## Building
 
 - Build all packages: `go build ./...`
-- Build MCP server: `go build -o build/mcp-gds cmd/mcp/main.go` (when MCP server exists)
+- Build specific package: `go build ./src/pkg/graph`
+- Build MCP server: `go build -o build/mcp-gds cmd/mcp/main.go` (when MCP server is implemented)
 - Check for Go formatting issues: `go fmt ./...`
 - Check for common Go issues: `go vet ./...`
+- Run manual testing: `go run testing/main.go`
 
 ## Module Management
 
@@ -95,31 +98,64 @@ var _ = Describe("MyComponent", func() {
 
 ## Application Architecture
 
-The application is a graph-based knowledge mapping system designed for LLM deep search capabilities:
+The application is a graph-based knowledge mapping system designed for LLM deep search capabilities. The system combines web search, scraping, and graph storage to create a knowledge network.
 
 ### Core Components
 
 - **Graph Database Layer**: Uses Cayley graph database with LevelDB backend for persistent storage
 - **Node System**: Interface-based design with URLNode as the primary node type representing web pages  
+- **Search Engine Layer**: Integration with SearchXNG for web search capabilities
+- **Scraping Engine**: Web scraping functionality using Colly with anti-detection measures
+- **Web Search Service**: High-level service that orchestrates search, scraping, and graph indexing
 - **MCP Server**: Enables LLM communication with the graph database (to be implemented)
 
 ### Package Structure
 
-- `pkg/graph/`: Graph database interface and Cayley implementation
+- `src/pkg/graph/`: Graph database interface and Cayley implementation
   - `Interface`: Defines graph operations (CRUD, traversal, queries)  
   - `CayleyGraph`: Cayley-based implementation with LevelDB storage
   - `Relation`: Represents directed relationships between nodes
-- `pkg/node/`: Generic node interface for graph entities
-- `pkg/object/`: Concrete node implementations
+- `src/pkg/node/`: Generic node interface for graph entities
+- `src/pkg/object/`: Concrete node implementations
   - `URLNode`: Web page nodes with URL, title, content, scraping status
-- `testing/`: Manual testing utilities demonstrating graph operations
+- `src/pkg/search_engine/`: SearchXNG integration
+  - `Interface`: Search engine abstraction layer
+  - `SearXNG`: SearchXNG client implementation with categories, time ranges, filtering
+- `src/pkg/scrapper/`: Web scraping functionality
+  - `Interface`: Scraping abstraction layer
+  - `Colly`: Colly-based scraper with anti-detection, rate limiting, robots.txt support
+- `src/service/web_seach/`: High-level web search and indexing service
+  - `Interface`: Service interface for search and indexing operations
+  - Implementation orchestrates search, scraping, and graph storage
+- `searXNG/`: SearchXNG configuration for local search instance
+- `testing/`: Manual testing utilities demonstrating system functionality
 
 ### Key Design Patterns
 
-- Interface-driven architecture: All major components expose interfaces
-- Serialization support: Nodes can serialize/deserialize for persistence
-- Context-aware operations: All database operations use context.Context
-- Generic property system: Nodes support arbitrary key-value properties
+- Interface-driven architecture: All major components expose interfaces for testability and flexibility
+- Layered architecture: Clear separation between search, scraping, graph storage, and service layers
+- Context-aware operations: All operations use context.Context for cancellation and timeouts
+- Configuration-driven: Extensive configuration support for search engines, scrapers, and services
+- Generic property system: Nodes support arbitrary key-value properties for extensibility
+- Anti-detection measures: Scrapers include user agent rotation, delays, and robots.txt compliance
+
+### External Dependencies
+
+- **SearchXNG**: Local search aggregator instance (configured to run on localhost:8888)
+  - Configuration file: `searXNG/settings.yml`
+  - Supports multiple search engines (Google, Bing, DuckDuckGo, etc.)
+  - Categories: general, news, images, videos, etc.
+  - Time ranges: short, medium, long
+- **Cayley Graph Database**: Graph database with LevelDB backend
+- **Colly**: Web scraping framework with anti-detection capabilities
+
+### SearchXNG Setup
+
+The system requires a local SearchXNG instance running on `http://localhost:8888`. The configuration file in `searXNG/settings.yml` provides:
+- Server configuration (port 8888, bind address 127.0.0.1)
+- Search engine integrations
+- Request timeout and rate limiting settings
+- Categories and filters configuration
 
 ### Database Operations
 

@@ -4,15 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"mgds/src/pkg/node"
+	"mgds/src/pkg/object"
 
 	"github.com/cayleygraph/cayley"
 	"github.com/cayleygraph/quad"
 
 	// Import LevelDB backend
 	_ "github.com/cayleygraph/cayley/graph/kv/leveldb"
-
-	"mgds/pkg/node"
-	"mgds/pkg/object"
 )
 
 // CayleyGraph implements the Interface using Cayley graph database
@@ -400,7 +399,7 @@ func (c *CayleyGraph) NodeExists(ctx context.Context, mgdsId string) (bool, erro
 	path := cayley.StartPath(c.store, quad.String(mgdsId)).Out(quad.String("mgds:id"))
 
 	var exists bool
-	err := path.Iterate(nil).EachValue(nil, func(value quad.Value) {
+	err := path.Iterate(context.TODO()).EachValue(nil, func(value quad.Value) {
 		exists = true
 	})
 

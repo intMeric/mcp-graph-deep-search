@@ -2,12 +2,11 @@ package scrapper_test
 
 import (
 	"context"
+	"mgds/src/pkg/scrapper"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
-	"mgds/pkg/scrapper"
 )
 
 var _ = Describe("Scrapper Integration Tests", func() {
@@ -39,7 +38,7 @@ var _ = Describe("Scrapper Integration Tests", func() {
 		Context("with httpbin.org (reliable test site)", func() {
 			It("should scrape basic HTML content", func() {
 				url := "https://httpbin.org/html"
-				
+
 				result, err := collyScrapper.Scrape(ctx, url)
 
 				Expect(err).NotTo(HaveOccurred())
@@ -53,13 +52,13 @@ var _ = Describe("Scrapper Integration Tests", func() {
 
 			It("should extract links from pages with links", func() {
 				url := "https://httpbin.org/"
-				
+
 				result, err := collyScrapper.Scrape(ctx, url)
 
 				Expect(err).NotTo(HaveOccurred())
 				Expect(result).NotTo(BeNil())
 				Expect(result.Links).NotTo(BeEmpty())
-				
+
 				// Check that at least one link is properly formatted
 				hasValidLink := false
 				for _, link := range result.Links {
@@ -75,7 +74,7 @@ var _ = Describe("Scrapper Integration Tests", func() {
 		Context("with example.com (minimal test site)", func() {
 			It("should handle simple pages", func() {
 				url := "https://example.com"
-				
+
 				result, err := collyScrapper.Scrape(ctx, url)
 
 				Expect(err).NotTo(HaveOccurred())
@@ -89,7 +88,7 @@ var _ = Describe("Scrapper Integration Tests", func() {
 		Context("with invalid URLs", func() {
 			It("should handle non-existent domains gracefully", func() {
 				url := "https://this-domain-should-not-exist-12345.com"
-				
+
 				result, err := collyScrapper.Scrape(ctx, url)
 
 				// Should return a result with error info, not fail completely
@@ -101,7 +100,7 @@ var _ = Describe("Scrapper Integration Tests", func() {
 
 			It("should reject malformed URLs", func() {
 				url := "not-a-valid-url"
-				
+
 				result, err := collyScrapper.Scrape(ctx, url)
 
 				Expect(err).To(HaveOccurred())
@@ -116,12 +115,12 @@ var _ = Describe("Scrapper Integration Tests", func() {
 					"https://example.com",
 					"https://httpbin.org/robots.txt",
 				}
-				
+
 				results, err := collyScrapper.ScrapeBatch(ctx, urls)
 
 				Expect(err).NotTo(HaveOccurred())
 				Expect(results).To(HaveLen(3))
-				
+
 				// Check that most results are valid
 				validCount := 0
 				for _, result := range results {
@@ -160,10 +159,10 @@ var _ = Describe("Scrapper Integration Tests", func() {
 
 			It("should normalize URLs correctly", func() {
 				testCases := map[string]string{
-					"HTTPS://EXAMPLE.COM/PATH":     "https://example.com/PATH",
-					"https://example.com:443/":     "https://example.com/",
-					"http://example.com:80/":       "http://example.com/",
-					"https://example.com/path/":    "https://example.com/path",
+					"HTTPS://EXAMPLE.COM/PATH":      "https://example.com/PATH",
+					"https://example.com:443/":      "https://example.com/",
+					"http://example.com:80/":        "http://example.com/",
+					"https://example.com/path/":     "https://example.com/path",
 					"https://example.com/#fragment": "https://example.com/",
 				}
 
@@ -186,7 +185,7 @@ var _ = Describe("Scrapper Integration Tests", func() {
 		Context("with anti-detection enabled", func() {
 			It("should scrape with stealth configuration", func() {
 				url := "https://httpbin.org/user-agent"
-				
+
 				result, err := antiDetectionScrapper.Scrape(ctx, url)
 
 				Expect(err).NotTo(HaveOccurred())
@@ -197,7 +196,7 @@ var _ = Describe("Scrapper Integration Tests", func() {
 
 			It("should use different user agents", func() {
 				url := "https://httpbin.org/user-agent"
-				
+
 				// Make multiple requests and check if user agents vary
 				results := make([]*scrapper.ScrapResult, 3)
 				for i := 0; i < 3; i++ {
@@ -209,6 +208,7 @@ var _ = Describe("Scrapper Integration Tests", func() {
 				// All should succeed
 				for _, result := range results {
 					Expect(result.StatusCode).To(Equal(200))
+
 					Expect(result.Content).To(ContainSubstring("user-agent"))
 				}
 			})
@@ -225,7 +225,7 @@ var _ = Describe("Scrapper Integration Tests", func() {
 			It("should complete scraping within reasonable time", func() {
 				url := "https://httpbin.org/html"
 				start := time.Now()
-				
+
 				result, err := collyScrapper.Scrape(ctx, url)
 				duration := time.Since(start)
 
@@ -247,7 +247,7 @@ var _ = Describe("Scrapper Integration Tests", func() {
 			It("should handle timeouts gracefully", func() {
 				// Using httpbin delay endpoint to test timeout
 				url := "https://httpbin.org/delay/5" // 5 second delay, but 2 second timeout
-				
+
 				result, err := collyScrapper.Scrape(ctx, url)
 
 				// Should either error or have an error in result
@@ -260,9 +260,9 @@ var _ = Describe("Scrapper Integration Tests", func() {
 			It("should respect context cancellation", func() {
 				cancelCtx, cancel := context.WithTimeout(ctx, 1*time.Second)
 				defer cancel()
-				
+
 				url := "https://httpbin.org/delay/3"
-				
+
 				result, err := collyScrapper.Scrape(cancelCtx, url)
 
 				// Should handle cancellation

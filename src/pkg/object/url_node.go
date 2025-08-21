@@ -1,10 +1,9 @@
 package object
 
 import (
+	"mgds/src/pkg/node"
 	"strings"
 	"time"
-	
-	"mgds/pkg/node"
 )
 
 const URLNodeType = "url"

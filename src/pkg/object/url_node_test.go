@@ -1,13 +1,12 @@
 package object_test
 
 import (
+	"mgds/src/pkg/node"
+	"mgds/src/pkg/object"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-
-	"mgds/pkg/node"
-	"mgds/pkg/object"
 )
 
 var _ = Describe("URLNode", func() {
@@ -68,7 +67,7 @@ var _ = Describe("URLNode", func() {
 			It("should create a URL node with additional details", func() {
 				title := "Example Title"
 				content := "Example content of the page"
-				
+
 				urlNode = object.NewURLNodeWithDetails(mgdsId, name, desc, url, title, content)
 				urlNodeConcrete := urlNode.(*object.URLNode)
 
@@ -89,10 +88,10 @@ var _ = Describe("URLNode", func() {
 			It("should handle string properties", func() {
 				key := "author"
 				value := "John Doe"
-				
+
 				urlNode.SetProperty(key, value)
 				retrievedValue, exists := urlNode.GetProperty(key)
-				
+
 				Expect(exists).To(BeTrue())
 				Expect(retrievedValue).To(Equal(value))
 			})
@@ -100,17 +99,17 @@ var _ = Describe("URLNode", func() {
 			It("should handle complex properties", func() {
 				key := "metadata"
 				value := map[string]string{"lang": "en", "charset": "utf-8"}
-				
+
 				urlNode.SetProperty(key, value)
 				retrievedValue, exists := urlNode.GetProperty(key)
-				
+
 				Expect(exists).To(BeTrue())
 				Expect(retrievedValue).To(Equal(value))
 			})
 
 			It("should return false for non-existent properties", func() {
 				value, exists := urlNode.GetProperty("non-existent")
-				
+
 				Expect(exists).To(BeFalse())
 				Expect(value).To(BeNil())
 			})
@@ -129,10 +128,10 @@ var _ = Describe("URLNode", func() {
 			It("should get and set URL", func() {
 				newURL := "https://newexample.com"
 				originalTime := urlNodeConcrete.GetUpdatedAt()
-				
+
 				time.Sleep(time.Millisecond) // Ensure time difference
 				urlNodeConcrete.SetURL(newURL)
-				
+
 				Expect(urlNodeConcrete.GetURL()).To(Equal(newURL))
 				Expect(urlNodeConcrete.GetUpdatedAt()).To(BeTemporally(">", originalTime))
 			})
@@ -142,10 +141,10 @@ var _ = Describe("URLNode", func() {
 			It("should get and set title", func() {
 				newTitle := "New Page Title"
 				originalTime := urlNodeConcrete.GetUpdatedAt()
-				
+
 				time.Sleep(time.Millisecond)
 				urlNodeConcrete.SetTitle(newTitle)
-				
+
 				Expect(urlNodeConcrete.GetTitle()).To(Equal(newTitle))
 				Expect(urlNodeConcrete.GetUpdatedAt()).To(BeTemporally(">", originalTime))
 			})
@@ -155,10 +154,10 @@ var _ = Describe("URLNode", func() {
 			It("should get and set content", func() {
 				newContent := "This is the new page content"
 				originalTime := urlNodeConcrete.GetUpdatedAt()
-				
+
 				time.Sleep(time.Millisecond)
 				urlNodeConcrete.SetContent(newContent)
-				
+
 				Expect(urlNodeConcrete.GetContent()).To(Equal(newContent))
 				Expect(urlNodeConcrete.GetUpdatedAt()).To(BeTemporally(">", originalTime))
 			})
@@ -171,20 +170,20 @@ var _ = Describe("URLNode", func() {
 
 			It("should set and get scrapped status", func() {
 				originalTime := urlNodeConcrete.GetUpdatedAt()
-				
+
 				time.Sleep(time.Millisecond)
 				urlNodeConcrete.SetScrapped(true)
-				
+
 				Expect(urlNodeConcrete.IsScrapped()).To(BeTrue())
 				Expect(urlNodeConcrete.GetUpdatedAt()).To(BeTemporally(">", originalTime))
 			})
 
 			It("should update timestamp when changing scrapped status", func() {
 				originalTime := urlNodeConcrete.GetUpdatedAt()
-				
+
 				time.Sleep(time.Millisecond)
 				urlNodeConcrete.SetScrapped(false)
-				
+
 				Expect(urlNodeConcrete.IsScrapped()).To(BeFalse())
 				Expect(urlNodeConcrete.GetUpdatedAt()).To(BeTemporally(">", originalTime))
 			})
@@ -194,7 +193,7 @@ var _ = Describe("URLNode", func() {
 			It("should have creation and update timestamps", func() {
 				createdAt := urlNodeConcrete.GetCreatedAt()
 				updatedAt := urlNodeConcrete.GetUpdatedAt()
-				
+
 				Expect(createdAt).NotTo(BeZero())
 				Expect(updatedAt).NotTo(BeZero())
 				Expect(updatedAt).To(BeTemporally(">=", createdAt))
@@ -202,10 +201,10 @@ var _ = Describe("URLNode", func() {
 
 			It("should update timestamp when setting properties", func() {
 				originalTime := urlNodeConcrete.GetUpdatedAt()
-				
+
 				time.Sleep(time.Millisecond)
 				urlNode.SetProperty("test", "value")
-				
+
 				Expect(urlNodeConcrete.GetUpdatedAt()).To(BeTemporally(">", originalTime))
 			})
 		})
