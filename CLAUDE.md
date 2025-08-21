@@ -15,15 +15,17 @@ You're not just a technician, you're a real software engineer. You can challenge
 - No TODOs in the code, no unused functions !
 - Comments must be in ENGLISH !
 - For each package that is intended to be used by others, always create interfaces. Make sure they are as SIMPLE as possible.
+- NEVER write empty if blocks or placeholder code that does nothing - delete it completely
 
 ## Testing
 
 - TEST-DRIVEN DEVELOPMENT IS NON-NEGOTIABLE.
 - Run all tests: `go test -v ./...`
-- Run specific package tests: `go test -v ./internal/pkg/cache`
+- Run specific package tests: `go test -v ./pkg/graph`
 - Run tests with coverage: `go test -v -cover ./...`
-- Run tests for specific file: `go test -v ./internal/pkg/cache -run TestLRUCache`
+- Run tests for specific test: `go test -v ./pkg/object -run TestURLNode`
 - Tests use Ginkgo BDD framework with Gomega assertions
+- Run manual testing: `go run testing/main.go`
 
 ### Test Example Structure
 
@@ -82,7 +84,7 @@ var _ = Describe("MyComponent", func() {
 ## Building
 
 - Build all packages: `go build ./...`
-- Build MCP server: `go build -o build/mcp-gds cmd/mcp/main.go`
+- Build MCP server: `go build -o build/mcp-gds cmd/mcp/main.go` (when MCP server exists)
 - Check for Go formatting issues: `go fmt ./...`
 - Check for common Go issues: `go vet ./...`
 
@@ -90,3 +92,35 @@ var _ = Describe("MyComponent", func() {
 
 - Module name: `mgds`
 - Go version: 1.23.0
+
+## Application Architecture
+
+The application is a graph-based knowledge mapping system designed for LLM deep search capabilities:
+
+### Core Components
+
+- **Graph Database Layer**: Uses Cayley graph database with LevelDB backend for persistent storage
+- **Node System**: Interface-based design with URLNode as the primary node type representing web pages  
+- **MCP Server**: Enables LLM communication with the graph database (to be implemented)
+
+### Package Structure
+
+- `pkg/graph/`: Graph database interface and Cayley implementation
+  - `Interface`: Defines graph operations (CRUD, traversal, queries)  
+  - `CayleyGraph`: Cayley-based implementation with LevelDB storage
+  - `Relation`: Represents directed relationships between nodes
+- `pkg/node/`: Generic node interface for graph entities
+- `pkg/object/`: Concrete node implementations
+  - `URLNode`: Web page nodes with URL, title, content, scraping status
+- `testing/`: Manual testing utilities demonstrating graph operations
+
+### Key Design Patterns
+
+- Interface-driven architecture: All major components expose interfaces
+- Serialization support: Nodes can serialize/deserialize for persistence
+- Context-aware operations: All database operations use context.Context
+- Generic property system: Nodes support arbitrary key-value properties
+
+### Database Operations
+
+The graph supports standard CRUD operations, relationship management, graph traversal (connected nodes, pathfinding), and node queries (by type, properties). All operations are context-aware and interface-based.
