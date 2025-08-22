@@ -366,9 +366,10 @@ func (cs *CollyScrapper) NormalizeURL(targetURL string) (string, error) {
 	u.Host = strings.ToLower(u.Host)
 
 	// Remove default ports
-	if (u.Scheme == "http" && strings.HasSuffix(u.Host, ":80")) ||
-		(u.Scheme == "https" && strings.HasSuffix(u.Host, ":443")) {
-		u.Host = u.Host[:len(u.Host)-4]
+	if u.Scheme == "http" && strings.HasSuffix(u.Host, ":80") {
+		u.Host = strings.TrimSuffix(u.Host, ":80")
+	} else if u.Scheme == "https" && strings.HasSuffix(u.Host, ":443") {
+		u.Host = strings.TrimSuffix(u.Host, ":443")
 	}
 
 	// Remove fragment

@@ -35,7 +35,6 @@ func NewWebSearchService(
 		defaultOptions: &SearchOptions{
 			MaxResults:   10,
 			MaxLinks:     50,
-			SkipScraping: false,
 			SkipLinking:  false,
 			ScrapTimeout: 30 * time.Second,
 			Parallelism:  3,
@@ -70,78 +69,55 @@ func (s *WebSearchService) SearchAndIndex(ctx context.Context, query string, opt
 		results = results[:opts.MaxResults]
 	}
 
-	if opts.SkipScraping {
-		// Only create nodes from search results without scraping
-		for _, searchResult := range results {
-			nodeId := s.generateNodeId(searchResult.URL)
-			urlNode := object.NewURLNodeWithDetails(
-				nodeId,
-				searchResult.Title,
-				searchResult.Content,
-				searchResult.URL,
-				searchResult.Title,
-				searchResult.Content,
-			)
+	// Step 2: Scrape all URLs concurrently
+	urls := make([]string, len(results))
+	for i, result := range results {
+		urls[i] = result.URL
+	}
 
-			if err := s.addOrUpdateNode(ctx, urlNode, result); err != nil {
-				result.Errors = append(result.Errors, IndexError{
-					URL:     searchResult.URL,
-					Type:    "indexing",
-					Message: err.Error(),
-				})
-			}
-		}
-	} else {
-		// Step 2: Scrape all URLs concurrently
-		urls := make([]string, len(results))
-		for i, result := range results {
-			urls[i] = result.URL
+	scrapResults, err := s.scrapeConcurrently(ctx, urls, opts)
+	if err != nil {
+		return result, fmt.Errorf("scraping failed: %w", err)
+	}
+
+	// Step 3: Index scraped content
+	for _, scrapResult := range scrapResults {
+		if scrapResult.Error != nil {
+			result.Errors = append(result.Errors, IndexError{
+				URL:     scrapResult.URL,
+				Type:    "scraping",
+				Message: scrapResult.Error.Error(),
+			})
+			result.Stats.SkippedPages++
+			continue
 		}
 
-		scrapResults, err := s.scrapeConcurrently(ctx, urls, opts)
-		if err != nil {
-			return result, fmt.Errorf("scraping failed: %w", err)
+		result.Stats.ScrapedPages++
+		result.Stats.LinksFound += len(scrapResult.Links)
+
+		// Create main page node
+		nodeId := s.generateNodeId(scrapResult.URL)
+		urlNode := object.NewURLNodeWithDetails(
+			nodeId,
+			scrapResult.Title,
+			fmt.Sprintf("Search result for: %s", query),
+			scrapResult.URL,
+			scrapResult.Title,
+			scrapResult.Content,
+		)
+
+		if err := s.addOrUpdateNode(ctx, urlNode, result); err != nil {
+			result.Errors = append(result.Errors, IndexError{
+				URL:     scrapResult.URL,
+				Type:    "indexing",
+				Message: err.Error(),
+			})
+			continue
 		}
 
-		// Step 3: Index scraped content
-		for _, scrapResult := range scrapResults {
-			if scrapResult.Error != nil {
-				result.Errors = append(result.Errors, IndexError{
-					URL:     scrapResult.URL,
-					Type:    "scraping",
-					Message: scrapResult.Error.Error(),
-				})
-				result.Stats.SkippedPages++
-				continue
-			}
-
-			result.Stats.ScrapedPages++
-			result.Stats.LinksFound += len(scrapResult.Links)
-
-			// Create main page node
-			nodeId := s.generateNodeId(scrapResult.URL)
-			urlNode := object.NewURLNodeWithDetails(
-				nodeId,
-				scrapResult.Title,
-				fmt.Sprintf("Search result for: %s", query),
-				scrapResult.URL,
-				scrapResult.Title,
-				scrapResult.Content,
-			)
-
-			if err := s.addOrUpdateNode(ctx, urlNode, result); err != nil {
-				result.Errors = append(result.Errors, IndexError{
-					URL:     scrapResult.URL,
-					Type:    "indexing",
-					Message: err.Error(),
-				})
-				continue
-			}
-
-			// Create nodes for links and relationships if not skipping
-			if !opts.SkipLinking {
-				s.indexLinks(ctx, nodeId, scrapResult.Links, opts, result)
-			}
+		// Create nodes for links and relationships if not skipping
+		if !opts.SkipLinking {
+			s.indexLinks(ctx, nodeId, scrapResult.Links, opts, result)
 		}
 	}
 
@@ -243,9 +219,6 @@ func (s *WebSearchService) mergeOptions(options *SearchOptions) *SearchOptions {
 	}
 	if options.MaxLinks > 0 {
 		opts.MaxLinks = options.MaxLinks
-	}
-	if options.SkipScraping {
-		opts.SkipScraping = options.SkipScraping
 	}
 	if options.SkipLinking {
 		opts.SkipLinking = options.SkipLinking

@@ -10,7 +10,6 @@ import (
 type SearchOptions struct {
 	MaxResults   int           `json:"maxResults,omitempty"`
 	MaxLinks     int           `json:"maxLinks,omitempty"`     // Max links per page to process
-	SkipScraping bool          `json:"skipScraping,omitempty"` // Only search, don't scrape
 	SkipLinking  bool          `json:"skipLinking,omitempty"`  // Don't create link relations
 	ScrapTimeout time.Duration `json:"scrapTimeout,omitempty"` // Timeout per scraping operation
 	Parallelism  int           `json:"parallelism,omitempty"`  // Number of concurrent scraping operations

@@ -399,18 +399,6 @@ var _ = Describe("WebSearchService", func() {
 				}
 			})
 
-			It("should only create nodes from search results without scraping", func() {
-				options := &webseach.SearchOptions{
-					SkipScraping: true,
-				}
-
-				result, err := webSearchService.SearchAndIndex(ctx, "test query", options)
-
-				Expect(err).NotTo(HaveOccurred())
-				Expect(result.Stats.ScrapedPages).To(Equal(0))
-				Expect(result.Stats.NodesCreated).To(Equal(1))
-				Expect(result.Stats.RelationsCreated).To(Equal(0))
-			})
 		})
 	})
 
