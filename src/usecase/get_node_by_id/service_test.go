@@ -133,16 +133,16 @@ func (m *MockNode) IsValid() bool {
 	return m.id != "" && m.nodeType != ""
 }
 
-var _ = Describe("GetNodeById Service", func() {
+var _ = Describe("GetNodeById UseCase", func() {
 	var (
-		service getnodebyid.Service
+		useCase getnodebyid.UseCase
 		mockDB  *MockGraphDB
 		ctx     context.Context
 	)
 
 	BeforeEach(func() {
 		mockDB = &MockGraphDB{}
-		service = getnodebyid.NewService(mockDB)
+		useCase = getnodebyid.NewUseCase(mockDB)
 		ctx = context.Background()
 	})
 
@@ -162,7 +162,7 @@ var _ = Describe("GetNodeById Service", func() {
 					NodeID: "node123",
 				}
 
-				response, err := service.Execute(ctx, request)
+				response, err := useCase.Execute(ctx, request)
 
 				Expect(err).NotTo(HaveOccurred())
 				Expect(response).NotTo(BeNil())
@@ -179,7 +179,7 @@ var _ = Describe("GetNodeById Service", func() {
 					NodeID: "node123",
 				}
 
-				response, err := service.Execute(ctx, request)
+				response, err := useCase.Execute(ctx, request)
 
 				Expect(err).NotTo(HaveOccurred())
 				Expect(response.NodeData["properties"]).NotTo(BeNil())
@@ -198,7 +198,7 @@ var _ = Describe("GetNodeById Service", func() {
 					NodeID: "nonexistent",
 				}
 
-				response, err := service.Execute(ctx, request)
+				response, err := useCase.Execute(ctx, request)
 
 				Expect(err).NotTo(HaveOccurred())
 				Expect(response).NotTo(BeNil())
@@ -210,7 +210,7 @@ var _ = Describe("GetNodeById Service", func() {
 
 		Context("with invalid request", func() {
 			It("should return failed status for nil request", func() {
-				response, err := service.Execute(ctx, nil)
+				response, err := useCase.Execute(ctx, nil)
 
 				Expect(err).NotTo(HaveOccurred())
 				Expect(response).NotTo(BeNil())
@@ -223,7 +223,7 @@ var _ = Describe("GetNodeById Service", func() {
 					NodeID: "",
 				}
 
-				response, err := service.Execute(ctx, request)
+				response, err := useCase.Execute(ctx, request)
 
 				Expect(err).NotTo(HaveOccurred())
 				Expect(response.Status).To(Equal(getnodebyid.StatusFailed))
@@ -235,7 +235,7 @@ var _ = Describe("GetNodeById Service", func() {
 					NodeID: "   ",
 				}
 
-				response, err := service.Execute(ctx, request)
+				response, err := useCase.Execute(ctx, request)
 
 				Expect(err).NotTo(HaveOccurred())
 				Expect(response.Status).To(Equal(getnodebyid.StatusFailed))
@@ -250,7 +250,7 @@ var _ = Describe("GetNodeById Service", func() {
 					NodeID: "node123",
 				}
 
-				response, err := service.Execute(ctx, request)
+				response, err := useCase.Execute(ctx, request)
 
 				Expect(err).NotTo(HaveOccurred())
 				Expect(response.Status).To(Equal(getnodebyid.StatusFailed))
@@ -264,7 +264,7 @@ var _ = Describe("GetNodeById Service", func() {
 					NodeID: "node123",
 				}
 
-				response, err := service.Execute(ctx, request)
+				response, err := useCase.Execute(ctx, request)
 
 				Expect(err).NotTo(HaveOccurred())
 				Expect(response.Status).To(Equal(getnodebyid.StatusFailed))
@@ -278,7 +278,7 @@ var _ = Describe("GetNodeById Service", func() {
 					NodeID: "node123",
 				}
 
-				response, err := service.Execute(ctx, request)
+				response, err := useCase.Execute(ctx, request)
 
 				Expect(err).NotTo(HaveOccurred())
 				Expect(response.Status).To(Equal(getnodebyid.StatusNotFound))
@@ -299,7 +299,7 @@ var _ = Describe("GetNodeById Service", func() {
 					NodeID: "node123",
 				}
 
-				response, err := service.Execute(ctx, request)
+				response, err := useCase.Execute(ctx, request)
 
 				Expect(err).NotTo(HaveOccurred())
 				Expect(response.Status).To(Equal(getnodebyid.StatusFailed))
@@ -308,11 +308,11 @@ var _ = Describe("GetNodeById Service", func() {
 		})
 	})
 
-	Describe("NewService", func() {
+	Describe("NewUseCase", func() {
 		It("should create a new service instance", func() {
-			newService := getnodebyid.NewService(mockDB)
+			newUseCase := getnodebyid.NewUseCase(mockDB)
 
-			Expect(newService).NotTo(BeNil())
+			Expect(newUseCase).NotTo(BeNil())
 		})
 	})
 })

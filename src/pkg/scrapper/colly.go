@@ -91,6 +91,21 @@ func (cs *CollyScrapper) Scrape(ctx context.Context, targetURL string) (*ScrapRe
 		return nil, fmt.Errorf("failed to normalize URL: %w", err)
 	}
 
+	// Create a new collector for each scrape to avoid concurrency issues
+	collector := colly.NewCollector(
+		colly.Async(true),
+		colly.IgnoreRobotsTxt(),
+	)
+
+	// Set basic configuration
+	collector.Limit(&colly.LimitRule{
+		DomainGlob:  "*",
+		Parallelism: 2,
+		Delay:       1 * time.Second,
+	})
+
+	collector.SetRequestTimeout(cs.config.Timeout)
+
 	result := &ScrapResult{
 		URL:       normalizedURL,
 		Links:     make([]Link, 0),
@@ -99,7 +114,7 @@ func (cs *CollyScrapper) Scrape(ctx context.Context, targetURL string) (*ScrapRe
 	}
 
 	// Set user agent
-	cs.collector.OnRequest(func(r *colly.Request) {
+	collector.OnRequest(func(r *colly.Request) {
 		r.Headers.Set("User-Agent", cs.config.UserAgent)
 		r.Headers.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
 		r.Headers.Set("Accept-Language", "en-US,en;q=0.5")
@@ -109,7 +124,7 @@ func (cs *CollyScrapper) Scrape(ctx context.Context, targetURL string) (*ScrapRe
 	})
 
 	// Handle HTML responses
-	cs.collector.OnHTML("html", func(e *colly.HTMLElement) {
+	collector.OnHTML("html", func(e *colly.HTMLElement) {
 		// Extract title
 		title := e.ChildText("title")
 		result.Title = strings.TrimSpace(title)
@@ -180,7 +195,7 @@ func (cs *CollyScrapper) Scrape(ctx context.Context, targetURL string) (*ScrapRe
 	})
 
 	// Extract all links
-	cs.collector.OnHTML("a[href]", func(e *colly.HTMLElement) {
+	collector.OnHTML("a[href]", func(e *colly.HTMLElement) {
 		href := e.Attr("href")
 		text := strings.TrimSpace(e.Text)
 		title := e.Attr("title")
@@ -232,7 +247,7 @@ func (cs *CollyScrapper) Scrape(ctx context.Context, targetURL string) (*ScrapRe
 	})
 
 	// Handle response
-	cs.collector.OnResponse(func(r *colly.Response) {
+	collector.OnResponse(func(r *colly.Response) {
 		result.StatusCode = r.StatusCode
 	})
 
@@ -240,7 +255,7 @@ func (cs *CollyScrapper) Scrape(ctx context.Context, targetURL string) (*ScrapRe
 	done := make(chan bool, 1) // Buffered to prevent blocking
 
 	// Handle errors
-	cs.collector.OnError(func(r *colly.Response, err error) {
+	collector.OnError(func(r *colly.Response, err error) {
 		result.Error = err
 		if r != nil {
 			result.StatusCode = r.StatusCode
@@ -253,7 +268,7 @@ func (cs *CollyScrapper) Scrape(ctx context.Context, targetURL string) (*ScrapRe
 		}
 	})
 
-	cs.collector.OnScraped(func(r *colly.Response) {
+	collector.OnScraped(func(r *colly.Response) {
 		select {
 		case done <- true:
 		default:
@@ -261,7 +276,7 @@ func (cs *CollyScrapper) Scrape(ctx context.Context, targetURL string) (*ScrapRe
 	})
 
 	// Visit the URL
-	err = cs.collector.Visit(normalizedURL)
+	err = collector.Visit(normalizedURL)
 	if err != nil {
 		result.Error = err
 		result.StatusCode = 0
@@ -279,7 +294,7 @@ func (cs *CollyScrapper) Scrape(ctx context.Context, targetURL string) (*ScrapRe
 	}
 
 	// Wait for all goroutines to finish
-	cs.collector.Wait()
+	collector.Wait()
 
 	return result, result.Error
 }

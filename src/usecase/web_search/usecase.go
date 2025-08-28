@@ -14,27 +14,27 @@ import (
 	webseach "mgds/src/service/web_seach"
 )
 
-// Service interface for the web search use case
-type Service interface {
+// UseCase interface for the web search use case
+type UseCase interface {
 	Execute(ctx context.Context, req *SearchRequest) (*SearchResponse, error)
 }
 
-// service implementation of the use case
-type service struct {
+// useCase implementation of the use case
+type useCase struct {
 	webSearchService webseach.Interface
 	graphDB          graph.Interface
 }
 
-// NewService creates a new instance of the use case service
-func NewService(webSearchService webseach.Interface, graphDB graph.Interface) Service {
-	return &service{
+// NewUseCase creates a new instance of the use case
+func NewUseCase(webSearchService webseach.Interface, graphDB graph.Interface) UseCase {
+	return &useCase{
 		webSearchService: webSearchService,
 		graphDB:          graphDB,
 	}
 }
 
 // Execute executes the web search and indexing use case
-func (s *service) Execute(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
+func (u *useCase) Execute(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
 	startTime := time.Now()
 
 	// Simple validation
@@ -57,7 +57,7 @@ func (s *service) Execute(ctx context.Context, req *SearchRequest) (*SearchRespo
 		MaxLinks:    300,
 	}
 
-	result, err := s.webSearchService.SearchAndIndex(ctx, req.Query, options)
+	result, err := u.webSearchService.SearchAndIndex(ctx, req.Query, options)
 	if err != nil {
 		return &SearchResponse{
 			Query:         req.Query,
@@ -72,7 +72,7 @@ func (s *service) Execute(ctx context.Context, req *SearchRequest) (*SearchRespo
 
 	// Process created nodes
 	for _, nodeInterface := range result.NodesCreated {
-		summary := s.convertToNodeSummary(nodeInterface)
+		summary := u.convertToNodeSummary(nodeInterface)
 		if summary != nil {
 			nodes = append(nodes, *summary)
 		}
@@ -80,7 +80,7 @@ func (s *service) Execute(ctx context.Context, req *SearchRequest) (*SearchRespo
 
 	// Process updated nodes
 	for _, nodeInterface := range result.NodesUpdated {
-		summary := s.convertToNodeSummary(nodeInterface)
+		summary := u.convertToNodeSummary(nodeInterface)
 		if summary != nil {
 			nodes = append(nodes, *summary)
 		}
@@ -95,7 +95,7 @@ func (s *service) Execute(ctx context.Context, req *SearchRequest) (*SearchRespo
 }
 
 // convertToNodeSummary converts a node.Interface to NodeSummary
-func (s *service) convertToNodeSummary(nodeInterface node.Interface) *NodeSummary {
+func (u *useCase) convertToNodeSummary(nodeInterface node.Interface) *NodeSummary {
 	if nodeInterface == nil {
 		return nil
 	}
@@ -125,7 +125,7 @@ func (s *service) convertToNodeSummary(nodeInterface node.Interface) *NodeSummar
 	return summary
 }
 
-// Factory to create the service with dependencies
+// Factory to create the use case with dependencies
 type Factory struct {
 	searchEngine search_engine.Interface
 	scraper      scrapper.Interface
@@ -141,8 +141,8 @@ func NewFactory(searchEngine search_engine.Interface, scraper scrapper.Interface
 	}
 }
 
-// CreateService creates the use case service with all dependencies
-func (f *Factory) CreateService() Service {
+// CreateUseCase creates the use case with all dependencies
+func (f *Factory) CreateUseCase() UseCase {
 	webSearchService := webseach.NewWebSearchService(f.searchEngine, f.scraper, f.graphDB)
-	return NewService(webSearchService, f.graphDB)
+	return NewUseCase(webSearchService, f.graphDB)
 }

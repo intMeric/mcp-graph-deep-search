@@ -7,25 +7,25 @@ import (
 	"mgds/src/pkg/graph"
 )
 
-// Service interface for the get node by ID use case
-type Service interface {
+// UseCase interface for the get node by ID use case
+type UseCase interface {
 	Execute(ctx context.Context, request *GetNodeByIdRequest) (*GetNodeByIdResponse, error)
 }
 
-// service implementation of the use case
-type service struct {
+// useCase implementation of the use case
+type useCase struct {
 	graphDB graph.Interface
 }
 
-// NewService creates a new instance of the use case service
-func NewService(graphDB graph.Interface) Service {
-	return &service{
+// NewUseCase creates a new instance of the use case
+func NewUseCase(graphDB graph.Interface) UseCase {
+	return &useCase{
 		graphDB: graphDB,
 	}
 }
 
 // Execute retrieves a node by ID and deserializes it
-func (s *service) Execute(ctx context.Context, request *GetNodeByIdRequest) (*GetNodeByIdResponse, error) {
+func (u *useCase) Execute(ctx context.Context, request *GetNodeByIdRequest) (*GetNodeByIdResponse, error) {
 	if request == nil || strings.TrimSpace(request.NodeID) == "" {
 		return &GetNodeByIdResponse{
 			Status: StatusFailed,
@@ -33,7 +33,7 @@ func (s *service) Execute(ctx context.Context, request *GetNodeByIdRequest) (*Ge
 		}, nil
 	}
 
-	nodeExists, err := s.graphDB.NodeExists(ctx, request.NodeID)
+	nodeExists, err := u.graphDB.NodeExists(ctx, request.NodeID)
 	if err != nil {
 		return &GetNodeByIdResponse{
 			Status: StatusFailed,
@@ -48,7 +48,7 @@ func (s *service) Execute(ctx context.Context, request *GetNodeByIdRequest) (*Ge
 		}, nil
 	}
 
-	node, err := s.graphDB.GetNode(ctx, request.NodeID)
+	node, err := u.graphDB.GetNode(ctx, request.NodeID)
 	if err != nil {
 		return &GetNodeByIdResponse{
 			Status: StatusFailed,

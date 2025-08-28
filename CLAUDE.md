@@ -21,9 +21,9 @@ You're not just a technician, you're a real software engineer. You can challenge
 
 - TEST-DRIVEN DEVELOPMENT IS NON-NEGOTIABLE.
 - Run all tests: `go test -v ./...`
-- Run specific package tests: `go test -v ./pkg/graph`
+- Run specific package tests: `go test -v ./src/pkg/graph`
 - Run tests with coverage: `go test -v -cover ./...`
-- Run tests for specific test: `go test -v ./pkg/object -run TestURLNode`
+- Run tests for specific test: `go test -v ./src/pkg/object -run TestURLNode`
 - Tests use Ginkgo BDD framework with Gomega assertions
 - Run manual testing: `go run testing/main.go` (tests SearchXNG integration)
 - Start SearchXNG instance: See searXNG/ directory for configuration (expects localhost:8888)
@@ -39,7 +39,7 @@ import (
     "context"
     . "github.com/onsi/ginkgo/v2"
     . "github.com/onsi/gomega"
-    "mgds/internal/pkg/mypackage"
+    "mgds/src/pkg/mypackage"
 )
 
 var _ = Describe("MyComponent", func() {
@@ -86,7 +86,7 @@ var _ = Describe("MyComponent", func() {
 
 - Build all packages: `go build ./...`
 - Build specific package: `go build ./src/pkg/graph`
-- Build MCP server: `go build -o build/mcp-gds cmd/mcp/main.go` (when MCP server is implemented)
+- Build MCP server: `go build -o build/mcp-gds cmd/src-mcp/main.go`
 - Check for Go formatting issues: `go fmt ./...`
 - Check for common Go issues: `go vet ./...`
 - Run manual testing: `go run testing/main.go`
@@ -98,22 +98,24 @@ var _ = Describe("MyComponent", func() {
 
 ## Application Architecture
 
-The application is a graph-based knowledge mapping system designed for LLM deep search capabilities. The system combines web search, scraping, and graph storage to create a knowledge network.
+The application is a graph-based knowledge mapping system designed for LLM deep search capabilities via MCP (Model Context Protocol). The system combines web search, scraping, and graph storage to create a knowledge network accessible by LLMs.
 
 ### Core Components
 
-- **Graph Database Layer**: Uses Cayley graph database with LevelDB backend for persistent storage
+- **MCP Server**: Exposes graph operations via MCP tools (`get_all_nodes`, `get_node_by_id`, `web_search`)
+- **Graph Database Layer**: Uses Cayley graph database with memory/LevelDB backends for persistent storage
 - **Node System**: Interface-based design with URLNode as the primary node type representing web pages  
 - **Search Engine Layer**: Integration with SearchXNG for web search capabilities
 - **Scraping Engine**: Web scraping functionality using Colly with anti-detection measures
 - **Web Search Service**: High-level service that orchestrates search, scraping, and graph indexing
-- **MCP Server**: Enables LLM communication with the graph database (to be implemented)
+- **Use Cases**: Clean architecture with dedicated use cases for graph operations
 
 ### Package Structure
 
+- `cmd/src-mcp/`: MCP server implementation exposing graph operations to LLMs
 - `src/pkg/graph/`: Graph database interface and Cayley implementation
   - `Interface`: Defines graph operations (CRUD, traversal, queries)  
-  - `CayleyGraph`: Cayley-based implementation with LevelDB storage
+  - `CayleyGraph`: Cayley-based implementation with memory/LevelDB storage
   - `Relation`: Represents directed relationships between nodes
 - `src/pkg/node/`: Generic node interface for graph entities
 - `src/pkg/object/`: Concrete node implementations
@@ -127,17 +129,22 @@ The application is a graph-based knowledge mapping system designed for LLM deep 
 - `src/service/web_seach/`: High-level web search and indexing service
   - `Interface`: Service interface for search and indexing operations
   - Implementation orchestrates search, scraping, and graph storage
+- `src/usecase/`: Clean architecture use cases
+  - `get_all_nodes/`: Retrieve all nodes from graph (interface: `UseCase`, implementation: `useCase`)
+  - `get_node_by_id/`: Retrieve specific node by ID (interface: `UseCase`, implementation: `useCase`)
+  - `web_search/`: Execute web search and indexing workflow (interface: `UseCase`, implementation: `useCase`)
 - `searXNG/`: SearchXNG configuration for local search instance
-- `testing/`: Manual testing utilities demonstrating system functionality
+- `testing/`: Manual testing utilities demonstrating SearchXNG integration
 
 ### Key Design Patterns
 
-- Interface-driven architecture: All major components expose interfaces for testability and flexibility
-- Layered architecture: Clear separation between search, scraping, graph storage, and service layers
-- Context-aware operations: All operations use context.Context for cancellation and timeouts
-- Configuration-driven: Extensive configuration support for search engines, scrapers, and services
-- Generic property system: Nodes support arbitrary key-value properties for extensibility
-- Anti-detection measures: Scrapers include user agent rotation, delays, and robots.txt compliance
+- **Clean Architecture**: Separation of use cases, services, and infrastructure layers
+- **Interface-driven architecture**: All major components expose interfaces for testability and flexibility
+- **MCP Integration**: Server exposes tools for LLM interaction via Model Context Protocol
+- **Context-aware operations**: All operations use context.Context for cancellation and timeouts
+- **Configuration-driven**: Extensive configuration support for search engines, scrapers, and services
+- **Generic property system**: Nodes support arbitrary key-value properties for extensibility
+- **Anti-detection measures**: Scrapers include user agent rotation, delays, and robots.txt compliance
 
 ### External Dependencies
 
@@ -146,8 +153,9 @@ The application is a graph-based knowledge mapping system designed for LLM deep 
   - Supports multiple search engines (Google, Bing, DuckDuckGo, etc.)
   - Categories: general, news, images, videos, etc.
   - Time ranges: short, medium, long
-- **Cayley Graph Database**: Graph database with LevelDB backend
+- **Cayley Graph Database**: Graph database with memory/LevelDB backends
 - **Colly**: Web scraping framework with anti-detection capabilities
+- **MCP-Golang**: Model Context Protocol implementation for LLM integration
 
 ### SearchXNG Setup
 
@@ -157,6 +165,18 @@ The system requires a local SearchXNG instance running on `http://localhost:8888
 - Request timeout and rate limiting settings
 - Categories and filters configuration
 
+### MCP Tools Available
+
+1. **get_all_nodes**: Retrieves all nodes from the graph database
+2. **get_node_by_id**: Retrieves a specific node by its ID
+3. **web_search**: Searches the web, scrapes results, and indexes them in the graph
+
 ### Database Operations
 
 The graph supports standard CRUD operations, relationship management, graph traversal (connected nodes, pathfinding), and node queries (by type, properties). All operations are context-aware and interface-based.
+
+### Environment Configuration
+
+- Copy `.env.template` to `.env` for environment configuration
+- Configure SearchXNG endpoint via `SEARXNG_HOST` (default: http://localhost:8888)
+- Neo4j configuration available but not currently used (system uses Cayley)

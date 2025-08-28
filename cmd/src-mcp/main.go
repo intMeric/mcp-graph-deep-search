@@ -104,9 +104,9 @@ func registerGetAllNodesTools(server *mcp_golang.Server, graphDB graph.Interface
 			}
 
 			ctx := context.Background()
-			service := getallnodes.NewService(graphDB)
+			useCase := getallnodes.NewUseCase(graphDB)
 
-			response, err := service.Execute(ctx)
+			response, err := useCase.Execute(ctx)
 			if err != nil {
 				return nil, fmt.Errorf("failed to get all nodes: %w", err)
 			}
@@ -130,13 +130,13 @@ func registerGetNodeByIdTools(server *mcp_golang.Server, graphDB graph.Interface
 			}
 
 			ctx := context.Background()
-			service := getnodebyid.NewService(graphDB)
+			useCase := getnodebyid.NewUseCase(graphDB)
 
 			request := &getnodebyid.GetNodeByIdRequest{
 				NodeID: args.NodeID,
 			}
 
-			response, err := service.Execute(ctx, request)
+			response, err := useCase.Execute(ctx, request)
 			if err != nil {
 				return nil, fmt.Errorf("failed to get node by id: %w", err)
 			}
@@ -161,7 +161,7 @@ func registerWebSearchTools(server *mcp_golang.Server, searchEngine search_engin
 
 			ctx := context.Background()
 			factory := websearch.NewFactory(searchEngine, scraper, graphDB)
-			service := factory.CreateService()
+			useCase := factory.CreateUseCase()
 
 			maxResults := args.MaxResults
 			if maxResults <= 0 {
@@ -176,7 +176,7 @@ func registerWebSearchTools(server *mcp_golang.Server, searchEngine search_engin
 				MaxResults: maxResults,
 			}
 
-			response, err := service.Execute(ctx, request)
+			response, err := useCase.Execute(ctx, request)
 			if err != nil {
 				return nil, fmt.Errorf("failed to execute web search: %w", err)
 			}

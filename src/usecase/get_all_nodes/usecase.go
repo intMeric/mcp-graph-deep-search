@@ -8,28 +8,28 @@ import (
 	"mgds/src/pkg/node"
 )
 
-// Service interface for the get all nodes use case
-type Service interface {
+// UseCase interface for the get all nodes use case
+type UseCase interface {
 	Execute(ctx context.Context) (*GetAllNodesResponse, error)
 }
 
-// service implementation of the use case
-type service struct {
+// useCase implementation of the use case
+type useCase struct {
 	graphDB graph.Interface
 }
 
-// NewService creates a new instance of the use case service
-func NewService(graphDB graph.Interface) Service {
-	return &service{
+// NewUseCase creates a new instance of the use case
+func NewUseCase(graphDB graph.Interface) UseCase {
+	return &useCase{
 		graphDB: graphDB,
 	}
 }
 
 // Execute retrieves all nodes from the graph
-func (s *service) Execute(ctx context.Context) (*GetAllNodesResponse, error) {
+func (u *useCase) Execute(ctx context.Context) (*GetAllNodesResponse, error) {
 	startTime := time.Now()
 
-	nodes, err := s.graphDB.GetAllNodes(ctx)
+	nodes, err := u.graphDB.GetAllNodes(ctx)
 	if err != nil {
 		return &GetAllNodesResponse{
 			Status:        StatusFailed,
@@ -43,7 +43,7 @@ func (s *service) Execute(ctx context.Context) (*GetAllNodesResponse, error) {
 	// Convert nodes to NodeSummary
 	var nodeSummaries []NodeSummary
 	for _, node := range nodes {
-		summary := s.convertToNodeSummary(node)
+		summary := u.convertToNodeSummary(node)
 		nodeSummaries = append(nodeSummaries, summary)
 	}
 
@@ -56,7 +56,7 @@ func (s *service) Execute(ctx context.Context) (*GetAllNodesResponse, error) {
 }
 
 // convertToNodeSummary converts a node.Interface to NodeSummary
-func (s *service) convertToNodeSummary(nodeInterface node.Interface) NodeSummary {
+func (u *useCase) convertToNodeSummary(nodeInterface node.Interface) NodeSummary {
 	summary := NodeSummary{
 		ID:          nodeInterface.GetMgdsId(),
 		Type:        nodeInterface.GetType(),

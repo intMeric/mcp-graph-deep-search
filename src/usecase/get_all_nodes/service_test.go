@@ -122,16 +122,16 @@ func (m *MockNode) IsValid() bool {
 	return m.id != "" && m.nodeType != ""
 }
 
-var _ = Describe("GetAllNodes Service", func() {
+var _ = Describe("GetAllNodes UseCase", func() {
 	var (
-		service getallnodes.Service
+		useCase getallnodes.UseCase
 		mockDB  *MockGraphDB
 		ctx     context.Context
 	)
 
 	BeforeEach(func() {
 		mockDB = &MockGraphDB{}
-		service = getallnodes.NewService(mockDB)
+		useCase = getallnodes.NewUseCase(mockDB)
 		ctx = context.Background()
 	})
 
@@ -146,7 +146,7 @@ var _ = Describe("GetAllNodes Service", func() {
 			})
 
 			It("should return success status with all nodes", func() {
-				response, err := service.Execute(ctx)
+				response, err := useCase.Execute(ctx)
 
 				Expect(err).NotTo(HaveOccurred())
 				Expect(response).NotTo(BeNil())
@@ -158,7 +158,7 @@ var _ = Describe("GetAllNodes Service", func() {
 			})
 
 			It("should convert nodes to proper NodeSummary format", func() {
-				response, err := service.Execute(ctx)
+				response, err := useCase.Execute(ctx)
 
 				Expect(err).NotTo(HaveOccurred())
 				Expect(response.Nodes[0].ID).To(Equal("node1"))
@@ -171,7 +171,7 @@ var _ = Describe("GetAllNodes Service", func() {
 			})
 
 			It("should measure execution time", func() {
-				response, err := service.Execute(ctx)
+				response, err := useCase.Execute(ctx)
 
 				Expect(err).NotTo(HaveOccurred())
 				Expect(response.ExecutionTime).To(BeNumerically(">", 0))
@@ -185,7 +185,7 @@ var _ = Describe("GetAllNodes Service", func() {
 			})
 
 			It("should return success status with empty results", func() {
-				response, err := service.Execute(ctx)
+				response, err := useCase.Execute(ctx)
 
 				Expect(err).NotTo(HaveOccurred())
 				Expect(response).NotTo(BeNil())
@@ -202,7 +202,7 @@ var _ = Describe("GetAllNodes Service", func() {
 			})
 
 			It("should return success status with zero count", func() {
-				response, err := service.Execute(ctx)
+				response, err := useCase.Execute(ctx)
 
 				Expect(err).NotTo(HaveOccurred())
 				Expect(response).NotTo(BeNil())
@@ -219,7 +219,7 @@ var _ = Describe("GetAllNodes Service", func() {
 			})
 
 			It("should return failed status with error message", func() {
-				response, err := service.Execute(ctx)
+				response, err := useCase.Execute(ctx)
 
 				Expect(err).NotTo(HaveOccurred())
 				Expect(response).NotTo(BeNil())
@@ -249,7 +249,7 @@ var _ = Describe("GetAllNodes Service", func() {
 
 			It("should handle context cancellation gracefully", func() {
 				cancelFunc()
-				response, err := service.Execute(ctx)
+				response, err := useCase.Execute(ctx)
 
 				Expect(err).NotTo(HaveOccurred())
 				Expect(response).NotTo(BeNil())
@@ -257,11 +257,11 @@ var _ = Describe("GetAllNodes Service", func() {
 		})
 	})
 
-	Describe("NewService", func() {
+	Describe("NewUseCase", func() {
 		It("should create a new service instance", func() {
-			newService := getallnodes.NewService(mockDB)
+			newUseCase := getallnodes.NewUseCase(mockDB)
 
-			Expect(newService).NotTo(BeNil())
+			Expect(newUseCase).NotTo(BeNil())
 		})
 	})
 })
