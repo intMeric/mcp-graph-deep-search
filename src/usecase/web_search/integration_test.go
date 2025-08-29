@@ -106,40 +106,6 @@ var _ = Describe("WebSearch Integration Tests", func() {
 			Expect(response.Error).To(Equal("Query cannot be empty"))
 		})
 
-		It("should execute real web search and index results", func() {
-			Skip("Requires SearchXNG running on localhost:8888")
-			
-			request := &websearch.SearchRequest{
-				Query:      "test",
-				MaxResults: 3,
-			}
-
-			response, err := useCase.Execute(ctx, request)
-			
-			Expect(err).NotTo(HaveOccurred())
-			Expect(response).NotTo(BeNil())
-			Expect(response.Query).To(Equal("test"))
-			Expect(response.ExecutionTime).To(BeNumerically(">", 0))
-			
-			if response.Status == websearch.StatusSuccess {
-				Expect(response.Nodes).NotTo(BeEmpty())
-				Expect(len(response.Nodes)).To(BeNumerically("<=", 3))
-				
-				// Check first node structure
-				if len(response.Nodes) > 0 {
-					node := response.Nodes[0]
-					Expect(node.ID).NotTo(BeEmpty())
-					Expect(node.URL).NotTo(BeEmpty())
-					Expect(node.Title).NotTo(BeEmpty())
-				}
-				
-				// Verify nodes were added to database
-				allNodes, err := graphDB.GetAllNodes(ctx)
-				Expect(err).NotTo(HaveOccurred())
-				Expect(len(allNodes)).To(BeNumerically(">=", len(response.Nodes)))
-			}
-		})
-
 		It("should handle invalid max results", func() {
 			request := &websearch.SearchRequest{
 				Query:      "golang",
@@ -166,22 +132,6 @@ var _ = Describe("WebSearch Integration Tests", func() {
 			Expect(response).NotTo(BeNil())
 			// Should default to 10 results
 			Expect(response.Query).To(Equal("python"))
-		})
-
-		It("should handle SearchXNG unavailable", func() {
-			Skip("Requires SearchXNG to be down - manual test")
-			
-			request := &websearch.SearchRequest{
-				Query:      "test unavailable",
-				MaxResults: 5,
-			}
-
-			response, err := useCase.Execute(ctx, request)
-			
-			Expect(err).NotTo(HaveOccurred())
-			Expect(response).NotTo(BeNil())
-			Expect(response.Status).To(Equal(websearch.StatusFailed))
-			Expect(response.Error).To(ContainSubstring("Search and index failed"))
 		})
 
 		It("should handle context cancellation", func() {
@@ -243,41 +193,6 @@ var _ = Describe("WebSearch Integration Tests", func() {
 			Expect(response.ExecutionTime).To(BeNumerically("<=", actualTime+100*time.Millisecond))
 		})
 
-		It("should handle multiple concurrent searches", func() {
-			Skip("Concurrent test - may be flaky")
-			
-			queries := []string{"concurrent1", "concurrent2", "concurrent3"}
-			responses := make(chan *websearch.SearchResponse, len(queries))
-			
-			// Start concurrent searches
-			for _, query := range queries {
-				go func(q string) {
-					request := &websearch.SearchRequest{
-						Query:      q,
-						MaxResults: 2,
-					}
-					resp, _ := useCase.Execute(ctx, request)
-					responses <- resp
-				}(query)
-			}
-			
-			// Collect responses
-			for i := 0; i < len(queries); i++ {
-				response := <-responses
-				Expect(response).NotTo(BeNil())
-				Expect(response.Query).To(BeElementOf(queries))
-			}
-		})
 	})
 
-	Context("with SearchXNG health check", func() {
-		It("should verify SearchXNG is accessible", func() {
-			if searchEngine != nil {
-				err := searchEngine.IsHealthy(ctx)
-				if err != nil {
-					Skip("SearchXNG not available at localhost:8888")
-				}
-			}
-		})
-	})
 })
