@@ -7,25 +7,20 @@ import (
 	"mgds/src/pkg/graph"
 )
 
-// UseCase interface for the get node by ID use case
-type UseCase interface {
-	Execute(ctx context.Context, request *GetNodeByIdRequest) (*GetNodeByIdResponse, error)
-}
-
-// useCase implementation of the use case
-type useCase struct {
+// UseCase implementation of the use case
+type UseCase struct {
 	graphDB graph.Interface
 }
 
 // NewUseCase creates a new instance of the use case
-func NewUseCase(graphDB graph.Interface) UseCase {
-	return &useCase{
+func NewUseCase(graphDB graph.Interface) *UseCase {
+	return &UseCase{
 		graphDB: graphDB,
 	}
 }
 
 // Execute retrieves a node by ID and deserializes it
-func (u *useCase) Execute(ctx context.Context, request *GetNodeByIdRequest) (*GetNodeByIdResponse, error) {
+func (u *UseCase) Execute(ctx context.Context, request *GetNodeByIdRequest) (*GetNodeByIdResponse, error) {
 	if request == nil || strings.TrimSpace(request.NodeID) == "" {
 		return &GetNodeByIdResponse{
 			Status: StatusFailed,

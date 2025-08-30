@@ -24,7 +24,7 @@ func TestGetAllNodesIntegration(t *testing.T) {
 
 var _ = Describe("GetAllNodes Integration Tests", func() {
 	var (
-		useCase     getallnodes.UseCase
+		useCase     *getallnodes.UseCase
 		graphDB     graph.Interface
 		ctx         context.Context
 	)

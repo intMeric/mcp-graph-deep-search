@@ -14,27 +14,22 @@ import (
 	webseach "mgds/src/service/web_seach"
 )
 
-// UseCase interface for the web search use case
-type UseCase interface {
-	Execute(ctx context.Context, req *SearchRequest) (*SearchResponse, error)
-}
-
-// useCase implementation of the use case
-type useCase struct {
+// UseCase implementation of the use case
+type UseCase struct {
 	webSearchService webseach.Interface
 	graphDB          graph.Interface
 }
 
 // NewUseCase creates a new instance of the use case
-func NewUseCase(webSearchService webseach.Interface, graphDB graph.Interface) UseCase {
-	return &useCase{
+func NewUseCase(webSearchService webseach.Interface, graphDB graph.Interface) *UseCase {
+	return &UseCase{
 		webSearchService: webSearchService,
 		graphDB:          graphDB,
 	}
 }
 
 // Execute executes the web search and indexing use case
-func (u *useCase) Execute(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
+func (u *UseCase) Execute(ctx context.Context, req *SearchRequest) (*SearchResponse, error) {
 	startTime := time.Now()
 
 	// Simple validation
@@ -95,7 +90,7 @@ func (u *useCase) Execute(ctx context.Context, req *SearchRequest) (*SearchRespo
 }
 
 // convertToNodeSummary converts a node.Interface to NodeSummary
-func (u *useCase) convertToNodeSummary(nodeInterface node.Interface) *NodeSummary {
+func (u *UseCase) convertToNodeSummary(nodeInterface node.Interface) *NodeSummary {
 	if nodeInterface == nil {
 		return nil
 	}
@@ -142,7 +137,7 @@ func NewFactory(searchEngine search_engine.Interface, scraper scrapper.Interface
 }
 
 // CreateUseCase creates the use case with all dependencies
-func (f *Factory) CreateUseCase() UseCase {
+func (f *Factory) CreateUseCase() *UseCase {
 	webSearchService := webseach.NewWebSearchService(f.searchEngine, f.scraper, f.graphDB)
 	return NewUseCase(webSearchService, f.graphDB)
 }

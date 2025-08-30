@@ -22,7 +22,7 @@ func TestGetNodeByIdIntegration(t *testing.T) {
 
 var _ = Describe("GetNodeById Integration Tests", func() {
 	var (
-		useCase getnodebyid.UseCase
+		useCase *getnodebyid.UseCase
 		graphDB graph.Interface
 		ctx     context.Context
 	)

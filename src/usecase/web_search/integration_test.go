@@ -24,7 +24,7 @@ func TestWebSearchIntegration(t *testing.T) {
 
 var _ = Describe("WebSearch Integration Tests", func() {
 	var (
-		useCase      websearch.UseCase
+		useCase      *websearch.UseCase
 		graphDB      graph.Interface
 		searchEngine search_engine.Interface
 		scraper      scrapper.Interface

@@ -8,25 +8,20 @@ import (
 	"mgds/src/pkg/node"
 )
 
-// UseCase interface for the get all nodes use case
-type UseCase interface {
-	Execute(ctx context.Context) (*GetAllNodesResponse, error)
-}
-
-// useCase implementation of the use case
-type useCase struct {
+// UseCase implementation of the use case
+type UseCase struct {
 	graphDB graph.Interface
 }
 
 // NewUseCase creates a new instance of the use case
-func NewUseCase(graphDB graph.Interface) UseCase {
-	return &useCase{
+func NewUseCase(graphDB graph.Interface) *UseCase {
+	return &UseCase{
 		graphDB: graphDB,
 	}
 }
 
 // Execute retrieves all nodes from the graph
-func (u *useCase) Execute(ctx context.Context) (*GetAllNodesResponse, error) {
+func (u *UseCase) Execute(ctx context.Context) (*GetAllNodesResponse, error) {
 	startTime := time.Now()
 
 	nodes, err := u.graphDB.GetAllNodes(ctx)
@@ -56,7 +51,7 @@ func (u *useCase) Execute(ctx context.Context) (*GetAllNodesResponse, error) {
 }
 
 // convertToNodeSummary converts a node.Interface to NodeSummary
-func (u *useCase) convertToNodeSummary(nodeInterface node.Interface) NodeSummary {
+func (u *UseCase) convertToNodeSummary(nodeInterface node.Interface) NodeSummary {
 	summary := NodeSummary{
 		ID:          nodeInterface.GetMgdsId(),
 		Type:        nodeInterface.GetType(),

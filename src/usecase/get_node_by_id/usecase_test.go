@@ -135,7 +135,7 @@ func (m *MockNode) IsValid() bool {
 
 var _ = Describe("GetNodeById UseCase", func() {
 	var (
-		useCase getnodebyid.UseCase
+		useCase *getnodebyid.UseCase
 		mockDB  *MockGraphDB
 		ctx     context.Context
 	)
